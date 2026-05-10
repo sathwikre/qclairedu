@@ -89,8 +89,8 @@ let timeLeft     = TIME_PER_QUESTION;
   if (!svg) return;
   svg.insertAdjacentHTML("afterbegin",
     `<defs><linearGradient id="ring-grad" x1="0" y1="0" x2="1" y2="1">
-       <stop offset="0%" stop-color="#7c5cff"/>
-       <stop offset="100%" stop-color="#22d3ee"/>
+       <stop offset="0%" stop-color="#a855f7"/>
+       <stop offset="100%" stop-color="#3b82f6"/>
      </linearGradient></defs>`);
 })();
 
@@ -290,7 +290,7 @@ function launchConfetti() {
   resize();
   window.addEventListener("resize", resize);
 
-  const colors = ["#7c5cff", "#22d3ee", "#22c55e", "#f59e0b", "#ec4899", "#ffffff"];
+  const colors = ["#a855f7", "#6366f1", "#3b82f6", "#22c55e", "#f59e0b", "#ec4899"];
   const particles = Array.from({ length: 160 }, () => ({
     x: Math.random() * window.innerWidth,
     y: -20 - Math.random() * 200,

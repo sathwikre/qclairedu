@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuantumQuiz — Test Your Knowledge</title>
+  <meta name="description" content="An interactive quiz on quantum computing for students." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <!-- Animated gradient backdrop -->
+  <div class="bg-orbs" aria-hidden="true">
+    <span class="orb orb-1"></span>
+    <span class="orb orb-2"></span>
+    <span class="orb orb-3"></span>
+  </div>
+
+  <main class="app">
+    <!-- =================== START SCREEN =================== -->
+    <section id="start-screen" class="card glass screen active">
+      <div class="brand">
+        <span class="brand-mark">⚛</span>
+        <span class="brand-name">QuantumQuiz</span>
+      </div>
+      <h1 class="title">Ready to test your <span class="grad-text">quantum</span> knowledge?</h1>
+      <p class="subtitle">20 questions · ~10 minutes · Instant feedback</p>
+
+      <ul class="feature-list">
+        <li><span>⏱</span> Timed challenges</li>
+        <li><span>🎯</span> Real-time scoring</li>
+        <li><span>🎉</span> Confetti for top scores</li>
+      </ul>
+
+      <button id="start-btn" class="btn btn-primary btn-lg" type="button">
+        Start Quiz
+        <span class="arrow">→</span>
+      </button>
+    </section>
+
+    <!-- =================== QUIZ SCREEN =================== -->
+    <section id="quiz-screen" class="card glass screen">
+      <header class="quiz-header">
+        <div class="quiz-meta">
+          <span id="question-counter" class="pill">Question 1 of 20</span>
+          <span id="timer" class="pill pill-timer">⏱ <span id="timer-value">20</span>s</span>
+        </div>
+        <div class="progress-track" aria-hidden="true">
+          <div id="progress-fill" class="progress-fill"></div>
+        </div>
+      </header>
+
+      <h2 id="question-text" class="question-text"></h2>
+
+      <div id="options" class="options" role="listbox" aria-label="Answer options"></div>
+
+      <footer class="quiz-footer">
+        <p id="feedback" class="feedback" aria-live="polite"></p>
+        <button id="next-btn" class="btn btn-primary" type="button" disabled>
+          Next Question <span class="arrow">→</span>
+        </button>
+      </footer>
+    </section>
+
+    <!-- =================== RESULT SCREEN =================== -->
+    <section id="result-screen" class="card glass screen">
+      <h2 class="result-title">Quiz Complete!</h2>
+      <p id="performance-message" class="performance-message"></p>
+
+      <div class="score-ring-wrap">
+        <svg class="score-ring" viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
+          <circle id="ring-progress" class="ring-progress" cx="60" cy="60" r="52"></circle>
+        </svg>
+        <div class="score-ring-label">
+          <span id="score-percent" class="score-percent">0%</span>
+          <span class="score-sub">Score</span>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat stat-correct">
+          <span class="stat-value" id="correct-count">0</span>
+          <span class="stat-label">Correct</span>
+        </div>
+        <div class="stat stat-wrong">
+          <span class="stat-value" id="wrong-count">0</span>
+          <span class="stat-label">Wrong</span>
+        </div>
+        <div class="stat stat-total">
+          <span class="stat-value" id="total-count">0</span>
+          <span class="stat-label">Total</span>
+        </div>
+      </div>
+
+      <button id="restart-btn" class="btn btn-primary btn-lg" type="button">
+        Restart Quiz <span class="arrow">↻</span>
+      </button>
+    </section>
+  </main>
+
+  <canvas id="confetti-canvas" aria-hidden="true"></canvas>
+
+  <script src="/script.js"></script>
+</body>
+</html>

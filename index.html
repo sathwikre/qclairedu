@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Quantum Quiz Platform</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+body{
+    background:#f4f6fb;
+}
+
+.container{
+    display:flex;
+    min-height:100vh;
+}
+
+/* EMPTY SIDEBAR */
+
+.sidebar{
+    width:240px;
+    background:white;
+    border-right:1px solid #e5e7eb;
+}
+
+.sidebar .module-title{
+    padding:22px 18px;
+    font-weight:700;
+    color:#111827;
+    border-bottom:1px solid #f3f4f6;
+}
+
+.question-list{
+    padding:12px;
+    max-height:calc(100vh - 120px);
+    overflow:auto;
+}
+
+.qitem{
+    background:#fbfdff;
+    border:1px solid #eef2ff;
+    padding:12px 14px;
+    border-radius:12px;
+    margin-bottom:10px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+}
+
+.qitem.active{
+    background:linear-gradient(90deg,#f3e8ff,#eef2ff);
+    border-color:#e9d5ff;
+}
+
+.qitem .dot{
+    width:14px;
+    height:14px;
+    border-radius:50%;
+}
+
+.qitem.correct .dot{background:#22c55e}
+.qitem.wrong .dot{background:#ef4444}
+.qitem.unanswered .dot{background:#e5e7eb}
+
+/* MAIN */
+
+.main-content{
+    flex:1;
+    padding:40px;
+}
+
+.topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:30px;
+}
+
+.topbar h1{
+    font-size:32px;
+    color:#111827;
+}
+
+.score-box{
+    background:linear-gradient(90deg,#a855f7,#3b82f6);
+    color:white;
+    padding:15px 30px;
+    border-radius:15px;
+    font-weight:600;
+    box-shadow:0 8px 20px rgba(168,85,247,0.3);
+}
+
+/* QUIZ CARD */
+
+.quiz-card{
+    background:white;
+    border-radius:30px;
+    padding:40px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.06);
+}
+
+.quiz-header{
+    display:flex;
+    justify-content:space-between;
+    gap:20px;
+}
+
+.question-count{
+    color:#8b5cf6;
+    font-weight:600;
+    margin-bottom:10px;
+}
+
+#question{
+    color:#111827;
+    line-height:1.4;
+    font-size:18px;
+    font-weight:600;
+}
+
+.timer-box{
+    background:#eef2ff;
+    padding:15px 20px;
+    border-radius:15px;
+    font-weight:600;
+    color:#7c3aed;
+    height:fit-content;
+}
+
+.status-badge{
+    padding:8px 14px;
+    border-radius:14px;
+    font-weight:700;
+    color:#fff;
+}
+.status-badge.correct{background:#16a34a}
+.status-badge.wrong{background:#ef4444}
+
+.explanation{
+    margin-top:18px;
+    padding:18px;
+    background:#fafafa;
+    border-radius:14px;
+    border:1px solid #eef2ff;
+    color:#374151;
+}
+
+/* PROGRESS */
+
+.progress-bar{
+    width:100%;
+    height:12px;
+    background:#e5e7eb;
+    border-radius:10px;
+    margin:30px 0;
+    overflow:hidden;
+}
+
+.progress-fill{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg,#a855f7,#3b82f6);
+    transition:0.5s;
+}
+
+/* OPTIONS */
+
+.options{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+}
+
+.option{
+    background:#ffffff;
+    border:2px solid #e6edf5;
+    padding:20px;
+    border-radius:18px;
+    cursor:pointer;
+    transition:0.3s;
+    font-weight:500;
+    font-size:16px;
+}
+
+.option:hover{
+    transform:translateY(-4px);
+    box-shadow:0 8px 20px rgba(0,0,0,0.08);
+}
+
+.correct{
+    background:#dcfce7 !important;
+    border-color:#22c55e !important;
+    color:#166534;
+}
+
+.wrong{
+    background:#fee2e2 !important;
+    border-color:#ef4444 !important;
+    color:#991b1b;
+}
+
+/* MESSAGE */
+
+.message{
+    margin-top:25px;
+    font-size:18px;
+    font-weight:600;
+}
+
+/* BUTTON */
+
+#nextBtn{
+    margin-top:30px;
+    border:none;
+    padding:16px 30px;
+    border-radius:15px;
+    background:linear-gradient(90deg,#a855f7,#3b82f6);
+    color:white;
+    font-size:16px;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+#nextBtn:hover{
+    transform:translateY(-3px);
+    box-shadow:0 8px 20px rgba(168,85,247,0.3);
+}
+
+#nextBtn:disabled{
+    opacity:0.5;
+    cursor:not-allowed;
+}
+
+/* RESULT */
+
+.result-card{
+    background:white;
+    border-radius:30px;
+    padding:50px;
+    margin-top:30px;
+    text-align:center;
+    box-shadow:0 10px 30px rgba(0,0,0,0.06);
+}
+
+.circle{
+    width:220px;
+    height:220px;
+    border-radius:50%;
+    background:conic-gradient(#8b5cf6,#3b82f6);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    margin:30px auto;
+}
+
+.inner-circle{
+    width:170px;
+    height:170px;
+    border-radius:50%;
+    background:white;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:38px;
+    font-weight:700;
+}
+
+.result-details{
+    margin:20px 0;
+}
+
+.result-details p{
+    margin:10px 0;
+    font-size:18px;
+}
+
+.restart-btn{
+    border:none;
+    padding:16px 35px;
+    border-radius:15px;
+    background:linear-gradient(90deg,#a855f7,#3b82f6);
+    color:white;
+    cursor:pointer;
+    font-size:16px;
+}
+
+.hidden{
+    display:none;
+}
+
+/* MOBILE */
+
+@media(max-width:900px){
+
+    .container{
+        flex-direction:column;
+    }
+
+    .sidebar{
+        display:none;
+    }
+
+    .options{
+        grid-template-columns:1fr;
+    }
+
+    .quiz-header{
+        flex-direction:column;
+    }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- SIDEBAR WITH QUESTION LIST -->
+
+    <aside class="sidebar">
+        <div class="module-title">Exam Module 0</div>
+        <div class="question-list" id="questionList"></div>
+    </aside>
+
+    <!-- MAIN -->
+
+    <main class="main-content">
+
+        <div class="topbar">
+
+            <h1>Quantum Computing Quiz</h1>
+
+            <div class="score-box">
+                Score: <span id="score">0</span>
+            </div>
+
+        </div>
+
+        <!-- QUIZ CARD -->
+
+        <div class="quiz-card">
+
+            <div class="quiz-header">
+
+                <div>
+
+                    <p class="question-count" id="questionCount">
+                        Question 1 of 20
+                    </p>
+
+                    <h2 id="question">
+                        Loading...
+                    </h2>
+
+                </div>
+
+                <div id="statusBadge" class="status-badge hidden"></div>
+
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <div class="options" id="options"></div>
+
+            <div class="message" id="message"></div>
+
+            <div class="explanation" id="explanation"></div>
+
+            <button id="nextBtn" disabled>
+                Next Question →
+            </button>
+
+        </div>
+
+        <!-- RESULT -->
+
+        <div class="result-card hidden" id="resultCard">
+
+            <h1>Quiz Completed 🎉</h1>
+
+            <div class="circle">
+                <div class="inner-circle">
+                    <span id="finalScore">0%</span>
+                </div>
+            </div>
+
+            <h2 id="performanceText"></h2>
+
+            <div class="result-details">
+                <p>✅ Correct Answers: <span id="correctAnswers"></span></p>
+                <p>❌ Wrong Answers: <span id="wrongAnswers"></span></p>
+            </div>
+
+            <button onclick="restartQuiz()" class="restart-btn">
+                Restart Quiz
+            </button>
+
+        </div>
+
+    </main>
+
+</div>
+
+<script>
+
+const quizData = [
+
+{
+    question:"Who introduced the concept of energy quanta in 1900?",
+    options:["Albert Einstein","Max Planck","Niels Bohr","Richard Feynman"],
+    answer:"Max Planck"
+},
+
+{
+    question:"What does the equation E = hf represent?",
+    options:[
+        "Energy of a photon",
+        "Speed of light",
+        "Quantum force",
+        "Momentum"
+    ],
+    answer:"Energy of a photon"
+},
+
+{
+    question:"Who explained the photoelectric effect?",
+    options:["Schrödinger","Dirac","Einstein","Heisenberg"],
+    answer:"Einstein"
+},
+
+{
+    question:"Wave-particle duality was proposed by:",
+    options:[
+        "Louis de Broglie",
+        "Max Born",
+        "Peter Shor",
+        "Grover"
+    ],
+    answer:"Louis de Broglie"
+},
+
+{
+    question:"Which principle states that position and momentum cannot both be measured exactly?",
+    options:[
+        "Superposition Principle",
+        "Quantum Tunneling",
+        "Uncertainty Principle",
+        "Entanglement Principle"
+    ],
+    answer:"Uncertainty Principle"
+},
+
+{
+    question:"Which notation is widely used in quantum computing?",
+    options:[
+        "Binary notation",
+        "Matrix notation",
+        "Bra-ket notation",
+        "Hexadecimal notation"
+    ],
+    answer:"Bra-ket notation"
+},
+
+{
+    question:"Who popularized the idea of quantum computing in 1981?",
+    options:[
+        "Peter Shor",
+        "Richard Feynman",
+        "Lov Grover",
+        "David Deutsch"
+    ],
+    answer:"Richard Feynman"
+},
+
+{
+    question:"Which algorithm demonstrated exponential quantum advantage first?",
+    options:[
+        "Grover’s Algorithm",
+        "Shor’s Algorithm",
+        "Deutsch-Jozsa Algorithm",
+        "VQE"
+    ],
+    answer:"Deutsch-Jozsa Algorithm"
+},
+
+{
+    question:"Shor’s Algorithm is mainly used for:",
+    options:[
+        "Searching databases",
+        "Factoring large numbers",
+        "Image processing",
+        "Data compression"
+    ],
+    answer:"Factoring large numbers"
+},
+
+{
+    question:"Grover’s Algorithm provides:",
+    options:[
+        "Exponential speedup",
+        "No speedup",
+        "Quadratic speedup",
+        "Linear slowdown"
+    ],
+    answer:"Quadratic speedup"
+},
+
+{
+    question:"A qubit can exist in:",
+    options:[
+        "Only 0",
+        "Only 1",
+        "Both 0 and 1 simultaneously",
+        "Neither 0 nor 1"
+    ],
+    answer:"Both 0 and 1 simultaneously"
+},
+
+{
+    question:"Which phenomenon allows instant correlation between qubits?",
+    options:[
+        "Diffraction",
+        "Refraction",
+        "Entanglement",
+        "Interference"
+    ],
+    answer:"Entanglement"
+},
+
+{
+    question:"Which of the following is a quantum hardware platform?",
+    options:[
+        "Trapped ions",
+        "RAM",
+        "HDD",
+        "SSD"
+    ],
+    answer:"Trapped ions"
+},
+
+{
+    question:"Which company achieved quantum supremacy with the Sycamore processor?",
+    options:[
+        "IBM",
+        "Microsoft",
+        "Google",
+        "Amazon"
+    ],
+    answer:"Google"
+},
+
+{
+    question:"What does NISQ stand for?",
+    options:[
+        "National Integrated System for Quantum",
+        "Noisy Intermediate-Scale Quantum",
+        "Networked Intelligent System Quantum",
+        "Non-Integrated Scalable Qubits"
+    ],
+    answer:"Noisy Intermediate-Scale Quantum"
+},
+
+{
+    question:"Which technology provides provably secure communication using quantum mechanics?",
+    options:[
+        "Blockchain",
+        "VPN",
+        "Quantum Key Distribution",
+        "Cloud Computing"
+    ],
+    answer:"Quantum Key Distribution"
+},
+
+{
+    question:"Quantum simulation is especially useful in:",
+    options:[
+        "Gaming",
+        "Drug discovery",
+        "Video editing",
+        "Social media"
+    ],
+    answer:"Drug discovery"
+},
+
+{
+    question:"Which quantum device is used for highly accurate timekeeping?",
+    options:[
+        "Laser Printer",
+        "Atomic Clock",
+        "Oscilloscope",
+        "GPS Antenna"
+    ],
+    answer:"Atomic Clock"
+},
+
+{
+    question:"Which company launched the first commercial quantum system?",
+    options:[
+        "IBM",
+        "Google",
+        "D-Wave",
+        "Intel"
+    ],
+    answer:"D-Wave"
+},
+
+{
+    question:"Which quantum hardware platform operates at room temperature?",
+    options:[
+        "Superconducting qubits",
+        "Photonic qubits",
+        "Silicon spin qubits",
+        "Trapped ions"
+    ],
+    answer:"Photonic qubits"
+}
+
+];
+// Track user answers for sidebar/status
+const userAnswers = new Array(quizData.length).fill(null); // 'correct' | 'wrong' | null
+const questionListEl = document.getElementById('questionList');
+function buildSidebar(){
+    questionListEl.innerHTML = '';
+    quizData.forEach((q,i) => {
+        const item = document.createElement('div');
+        item.className = 'qitem unanswered';
+        item.dataset.index = i;
+        item.innerHTML = `<span>Question ${i+1}</span><span class="dot"></span>`;
+        item.addEventListener('click',() => {
+            currentQuestion = i;
+            loadQuestion();
+        });
+        questionListEl.appendChild(item);
+    });
+}
+function updateSidebarItem(i){
+    const el = questionListEl.querySelector(`.qitem[data-index="${i}"]`);
+    if(!el) return;
+    el.classList.remove('correct','wrong','unanswered','active');
+    if(userAnswers[i] === 'correct') el.classList.add('correct');
+    else if(userAnswers[i] === 'wrong') el.classList.add('wrong');
+    else el.classList.add('unanswered');
+}
+
+buildSidebar();
+const question = document.getElementById("question");
+const options = document.getElementById("options");
+const nextBtn = document.getElementById("nextBtn");
+const scoreText = document.getElementById("score");
+const progressFill = document.getElementById("progressFill");
+const message = document.getElementById("message");
+const questionCount = document.getElementById("questionCount");
+
+let currentQuestion = 0;
+let score = 0;
+let wrong = 0;
+
+loadQuestion();
+
+function loadQuestion(){
+
+    resetState();
+
+    const current = quizData[currentQuestion];
+
+    question.innerText = current.question;
+
+    questionCount.innerText =
+    `Question ${currentQuestion + 1} of ${quizData.length}`;
+
+    progressFill.style.width =
+    `${((currentQuestion)/quizData.length)*100}%`;
+
+    // render options
+    current.options.forEach(option => {
+
+        const button = document.createElement("button");
+
+        button.innerText = option;
+
+        button.classList.add("option");
+
+        button.addEventListener("click",() =>
+        selectAnswer(button,current.answer));
+
+        options.appendChild(button);
+
+    });
+
+    // update sidebar active state
+    Array.from(questionListEl.children).forEach(el => el.classList.remove('active'));
+    const activeEl = questionListEl.querySelector(`.qitem[data-index="${currentQuestion}"]`);
+    if(activeEl) activeEl.classList.add('active');
+
+    // if already answered, show result for this question
+    const statusBadge = document.getElementById('statusBadge');
+    const explanationEl = document.getElementById('explanation');
+    statusBadge.classList.add('hidden');
+    explanationEl.innerText = '';
+
+    if(userAnswers[currentQuestion] !== null){
+
+        const allBtns = Array.from(options.children);
+
+        allBtns.forEach(btn => btn.disabled = true);
+
+        if(userAnswers[currentQuestion] === 'correct'){
+            // highlight correct button
+            allBtns.forEach(btn => {
+                if(btn.innerText === current.answer) btn.classList.add('correct');
+            });
+            message.innerHTML = '✅ Correct Answer';
+            statusBadge.classList.remove('hidden');
+            statusBadge.classList.remove('wrong');
+            statusBadge.classList.add('correct');
+            statusBadge.innerText = 'Correct';
+
+        }else{
+            // mark correct and chosen wrong
+            allBtns.forEach(btn => {
+                if(btn.innerText === current.answer) btn.classList.add('correct');
+            });
+            message.innerHTML = '❌ Wrong Answer';
+            statusBadge.classList.remove('hidden');
+            statusBadge.classList.remove('correct');
+            statusBadge.classList.add('wrong');
+            statusBadge.innerText = 'Incorrect';
+        }
+
+        explanationEl.innerText = `Explanation: Correct answer is "${current.answer}".`;
+
+        nextBtn.disabled = false;
+
+    }
+
+}
+
+function resetState(){
+
+    nextBtn.disabled = true;
+
+    message.innerHTML = "";
+
+    options.innerHTML = "";
+
+    // timer removed
+
+}
+
+// timer removed
+
+function selectAnswer(button,correctAnswer){
+
+    const allOptions = Array.from(options.children);
+
+    allOptions.forEach(btn => btn.disabled = true);
+
+    if(button.innerText === correctAnswer){
+
+        button.classList.add("correct");
+
+        message.innerHTML = "✅ Correct Answer";
+
+        score++;
+
+        scoreText.innerText = score;
+
+        userAnswers[currentQuestion] = 'correct';
+        updateSidebarItem(currentQuestion);
+
+        // status badge & explanation
+        const statusBadge = document.getElementById('statusBadge');
+        statusBadge.classList.remove('hidden');
+        statusBadge.classList.remove('wrong');
+        statusBadge.classList.add('correct');
+        statusBadge.innerText = 'Correct';
+        document.getElementById('explanation').innerText = `Explanation: Correct answer is "${correctAnswer}".`;
+
+    }else{
+
+        button.classList.add("wrong");
+
+        message.innerHTML = "❌ Wrong Answer";
+
+        wrong++;
+
+        allOptions.forEach(btn => {
+
+            if(btn.innerText === correctAnswer){
+
+                btn.classList.add("correct");
+
+            }
+
+        });
+
+        userAnswers[currentQuestion] = 'wrong';
+        updateSidebarItem(currentQuestion);
+
+        const statusBadge = document.getElementById('statusBadge');
+        statusBadge.classList.remove('hidden');
+        statusBadge.classList.remove('correct');
+        statusBadge.classList.add('wrong');
+        statusBadge.innerText = 'Incorrect';
+        document.getElementById('explanation').innerText = `Explanation: Correct answer is "${correctAnswer}".`;
+
+    }
+
+    nextBtn.disabled = false;
+
+}
+
+nextBtn.addEventListener("click",() => {
+
+    currentQuestion++;
+
+    if(currentQuestion < quizData.length){
+
+        loadQuestion();
+
+    }else{
+
+        showResult();
+
+    }
+
+});
+
+function showResult(){
+
+    document.querySelector(".quiz-card").classList.add("hidden");
+
+    document.getElementById("resultCard").classList.remove("hidden");
+
+    let percentage = Math.round((score/quizData.length)*100);
+
+    document.getElementById("finalScore").innerText =
+    percentage + "%";
+
+    document.getElementById("correctAnswers").innerText = score;
+
+    document.getElementById("wrongAnswers").innerText = wrong;
+
+    let text = "";
+
+    if(percentage >= 90){
+
+        text = "Excellent Performance 🚀";
+
+        confetti();
+
+    }else if(percentage >= 70){
+
+        text = "Good Job 🔥";
+
+    }else if(percentage >= 50){
+
+        text = "Average Performance 🙂";
+
+    }else{
+
+        text = "Needs Improvement 📚";
+
+    }
+
+    document.getElementById("performanceText").innerText = text;
+
+}
+
+function restartQuiz(){
+
+    currentQuestion = 0;
+    score = 0;
+    wrong = 0;
+
+    // reset per-question states
+    for(let i=0;i<userAnswers.length;i++) userAnswers[i] = null;
+    buildSidebar();
+
+    scoreText.innerText = 0;
+
+    document.getElementById("resultCard")
+    .classList.add("hidden");
+
+    document.querySelector(".quiz-card")
+    .classList.remove("hidden");
+
+    loadQuestion();
+
+}
+
+</script>
+
+</body>
+</html>

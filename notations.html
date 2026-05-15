@@ -1,0 +1,1707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AsymptoLab — Interactive Asymptotic Notation Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,700;0,9..144,900;1,9..144,400&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+/* ===================== DARK FUTURISTIC THEME ===================== */
+:root {
+  --bg:          #080b14;
+  --bg2:         #0d1220;
+  --surface:     rgba(255,255,255,0.04);
+  --surface2:    rgba(255,255,255,0.07);
+  --border:      rgba(255,255,255,0.08);
+  --border2:     rgba(255,255,255,0.14);
+
+  /* Notation colors */
+  --c-bigo:    #60a5fa; /* Blue */
+  --c-omega:   #34d399; /* Green */
+  --c-theta:   #c084fc; /* Purple */
+  --c-lito:    #fb923c; /* Orange */
+  --c-litw:    #f87171; /* Red */
+
+  --ink:       #f0f4ff;
+  --ink-mid:   rgba(240,244,255,0.7);
+  --ink-soft:  rgba(240,244,255,0.45);
+  --ink-pale:  rgba(240,244,255,0.25);
+  --neon-glow: 0 0 20px rgba(96,165,250,0.4);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Syne', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  overflow-x: hidden;
+}
+
+/* ===================== ANIMATIONS ===================== */
+@keyframes float-a   { 0%,100%{transform:translateY(0)}   50%{transform:translateY(-14px)} }
+@keyframes float-b   { 0%,100%{transform:translateY(0)}   50%{transform:translateY(-9px)} }
+@keyframes float-c   { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-7px) rotate(4deg)} }
+@keyframes shimmer   { 0%{background-position:-200% center} 100%{background-position:200% center} }
+@keyframes grad-pan  { 0%{background-position:0% 50%}  50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+@keyframes fadeUp    { from{opacity:0;transform:translateY(22px)} to{opacity:1;transform:translateY(0)} }
+@keyframes draw-line { from{stroke-dashoffset:1200} to{stroke-dashoffset:0} }
+@keyframes grow-bar  { from{transform:scaleX(0)} to{transform:scaleX(1)} }
+@keyframes spin-slow { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+@keyframes pulse-glow{ 0%,100%{opacity:.5;transform:scale(1)} 50%{opacity:1;transform:scale(1.05)} }
+@keyframes scan-line { 0%{transform:translateY(-100%)} 100%{transform:translateY(100vh)} }
+@keyframes particle-float {
+  0%{transform:translateY(0) translateX(0) scale(1); opacity:.6}
+  33%{transform:translateY(-30px) translateX(15px) scale(1.2); opacity:.9}
+  66%{transform:translateY(-10px) translateX(-10px) scale(.8); opacity:.4}
+  100%{transform:translateY(0) translateX(0) scale(1); opacity:.6}
+}
+@keyframes border-pulse { 0%,100%{border-color:rgba(96,165,250,0.2)} 50%{border-color:rgba(96,165,250,0.5)} }
+@keyframes cursor-blink{ 0%,100%{opacity:1}50%{opacity:0} }
+@keyframes neon-flicker{ 0%,95%,100%{opacity:1} 96%{opacity:.4} 98%{opacity:.9} }
+@keyframes race-grow { from{width:0%} to{width:var(--target-w)} }
+@keyframes score-pop { 0%{transform:scale(0);opacity:0} 80%{transform:scale(1.2)} 100%{transform:scale(1);opacity:1} }
+@keyframes progress-fill { from{width:0} to{width:var(--fill-w)} }
+
+/* ===================== TYPOGRAPHY ===================== */
+.font-fraunces { font-family:'Fraunces',serif; }
+.font-mono     { font-family:'DM Mono',monospace; }
+.font-syne     { font-family:'Syne',sans-serif; }
+
+.shimmer-text {
+  background: linear-gradient(90deg,#60a5fa 0%,#c084fc 30%,#f0f4ff 50%,#c084fc 70%,#60a5fa 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 5s linear infinite;
+}
+
+.neon-text-blue { color: var(--c-bigo); text-shadow: 0 0 10px rgba(96,165,250,.6); }
+.neon-text-green { color: var(--c-omega); text-shadow: 0 0 10px rgba(52,211,153,.6); }
+.neon-text-purple { color: var(--c-theta); text-shadow: 0 0 10px rgba(192,132,252,.6); }
+.neon-text-orange { color: var(--c-lito); text-shadow: 0 0 10px rgba(251,146,60,.6); }
+.neon-text-red { color: var(--c-litw); text-shadow: 0 0 10px rgba(248,113,113,.6); }
+
+/* ===================== GLASS / CARD ===================== */
+.glass {
+  background: var(--surface);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 32px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.06);
+}
+.glass-blue {
+  background: rgba(96,165,250,0.05);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(96,165,250,0.18);
+  box-shadow: 0 4px 24px rgba(96,165,250,0.08);
+}
+.glow-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.3);
+  transition: all .3s ease;
+}
+.glow-card:hover {
+  border-color: rgba(96,165,250,0.4);
+  box-shadow: 0 12px 40px rgba(96,165,250,0.12), 0 0 0 1px rgba(96,165,250,0.1);
+  transform: translateY(-3px);
+}
+.card-bigo  { border-color: rgba(96,165,250,0.25)!important; }
+.card-omega { border-color: rgba(52,211,153,0.25)!important; }
+.card-theta { border-color: rgba(192,132,252,0.25)!important; }
+.card-lito  { border-color: rgba(251,146,60,0.25)!important; }
+.card-litw  { border-color: rgba(248,113,113,0.25)!important; }
+
+/* ===================== SECTION LABEL ===================== */
+.sec-label {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: .68rem; font-weight: 700; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--c-bigo); opacity:.8;
+}
+.sec-label::before {
+  content:''; width:20px; height:2px;
+  background: var(--c-bigo); border-radius: 2px;
+}
+
+/* ===================== NAV ===================== */
+.nav-link {
+  padding: 5px 14px; border-radius: 999px;
+  font-size: .75rem; font-weight: 600;
+  color: var(--ink-soft); text-decoration: none;
+  transition: all .2s; border: 1px solid transparent;
+}
+.nav-link:hover {
+  color: var(--ink); border-color: var(--border2);
+  background: var(--surface2);
+}
+
+/* ===================== INTERACTIVE GRAPH ===================== */
+.graph-canvas {
+  background: rgba(0,0,0,.3);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  cursor: crosshair;
+  position: relative;
+}
+.tooltip {
+  position: absolute; pointer-events: none; z-index: 50;
+  background: rgba(8,11,20,.95); border: 1px solid rgba(96,165,250,.4);
+  border-radius: 10px; padding: 8px 12px;
+  font-family: 'DM Mono',monospace; font-size: .72rem;
+  color: var(--ink); box-shadow: 0 8px 24px rgba(0,0,0,.6);
+  opacity: 0; transition: opacity .15s;
+  white-space: nowrap;
+}
+.tooltip.visible { opacity: 1; }
+
+/* ===================== CONTROLS ===================== */
+.ctrl-slider {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 5px; border-radius: 99px;
+  background: var(--surface2); outline: none; cursor: pointer;
+}
+.ctrl-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 16px; height: 16px;
+  border-radius: 50%; background: var(--c-bigo);
+  cursor: pointer; border: 2px solid var(--bg);
+  box-shadow: 0 0 8px rgba(96,165,250,.5);
+}
+.ctrl-slider.green::-webkit-slider-thumb { background: var(--c-omega); box-shadow: 0 0 8px rgba(52,211,153,.5); }
+.ctrl-slider.purple::-webkit-slider-thumb { background: var(--c-theta); box-shadow: 0 0 8px rgba(192,132,252,.5); }
+.ctrl-slider.orange::-webkit-slider-thumb { background: var(--c-lito); box-shadow: 0 0 8px rgba(251,146,60,.5); }
+
+.ctrl-btn {
+  padding: 6px 14px; border-radius: 8px; font-size: .76rem; font-weight: 600;
+  cursor: pointer; border: 1px solid var(--border); background: var(--surface);
+  color: var(--ink-mid); transition: all .2s;
+}
+.ctrl-btn:hover { border-color: var(--border2); color: var(--ink); background: var(--surface2); }
+.ctrl-btn.active { background: rgba(96,165,250,.15); border-color: rgba(96,165,250,.4); color: var(--c-bigo); }
+.ctrl-btn.active-green { background: rgba(52,211,153,.15); border-color: rgba(52,211,153,.4); color: var(--c-omega); }
+.ctrl-btn.active-purple{ background: rgba(192,132,252,.15); border-color: rgba(192,132,252,.4); color: var(--c-theta); }
+
+.fn-toggle {
+  padding: 5px 12px; border-radius: 7px; font-family: 'DM Mono',monospace;
+  font-size: .74rem; cursor: pointer; border: 1px solid var(--border);
+  background: var(--surface); color: var(--ink-soft); transition: all .2s;
+}
+.fn-toggle.on  { color: var(--ink); border-color: var(--border2); background: var(--surface2); }
+
+/* ===================== QUIZ ===================== */
+.quiz-opt { display: none; }
+.quiz-label {
+  display: block; cursor: pointer; padding: 11px 16px;
+  border-radius: 11px; border: 1.5px solid var(--border);
+  background: var(--surface); font-size: .84rem; font-weight: 600;
+  color: var(--ink-mid); transition: all .2s; text-align: center;
+}
+.quiz-label:hover { border-color: rgba(96,165,250,.4); background: rgba(96,165,250,.06); color: var(--ink); }
+.quiz-opt:checked + .quiz-label {
+  border-color: var(--c-bigo); background: rgba(96,165,250,.12);
+  color: var(--c-bigo); box-shadow: 0 0 0 3px rgba(96,165,250,.12);
+}
+.quiz-opt.correct:checked + .quiz-label { border-color: var(--c-omega)!important; background: rgba(52,211,153,.12)!important; color: var(--c-omega)!important; }
+
+/* ===================== CMP TABLE ===================== */
+.cmp-row {
+  display: grid; grid-template-columns: 80px 1fr 1fr 1fr;
+  gap: 10px; align-items: center;
+  padding: 13px 18px; border-radius: 12px; animation: fadeUp .5s ease-out both;
+}
+.cmp-row:nth-child(odd) { background: var(--surface); }
+.cmp-row:nth-child(even) { background: transparent; }
+
+/* ===================== BAR CHART ===================== */
+.bar-track { background: rgba(255,255,255,.06); border-radius: 999px; height: 14px; overflow: hidden; flex: 1; }
+.bar-fill  { height: 100%; border-radius: 999px; transform-origin: left; animation: grow-bar 1.6s cubic-bezier(.16,1,.3,1) both; }
+
+/* ===================== NOTATION BADGE ===================== */
+.n-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%; font-family: 'Fraunces',serif; font-weight: 700; flex-shrink: 0;
+}
+
+/* ===================== PROGRESS ===================== */
+.prog-bar { height: 4px; background: var(--surface2); border-radius: 999px; overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 999px; transition: width 0.6s ease; }
+
+/* ===================== PARTICLES ===================== */
+.particle {
+  position: absolute; border-radius: 50%; pointer-events: none;
+  animation: particle-float var(--dur, 6s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+/* ===================== RACE TRACK ===================== */
+.race-label { font-family: 'DM Mono', monospace; font-size: .72rem; color: var(--ink-soft); min-width: 70px; }
+.race-track { height: 20px; background: rgba(255,255,255,.04); border-radius: 99px; overflow: hidden; flex: 1; position: relative; }
+.race-fill  { height: 100%; border-radius: 99px; position: absolute; left: 0; top: 0; width: 0; transition: width .1s linear; }
+.race-val   { font-family: 'DM Mono', monospace; font-size: .68rem; min-width: 52px; text-align: right; }
+
+/* ===================== TOOLTIP WRAPPER ===================== */
+.tip-wrap { position: relative; display: inline-block; }
+.tip-box  {
+  position: absolute; bottom: calc(100% + 8px); left: 50%;
+  transform: translateX(-50%);
+  background: rgba(8,11,20,.95); border: 1px solid var(--border2);
+  border-radius: 10px; padding: 7px 12px;
+  font-size: .7rem; white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(0,0,0,.5);
+  opacity: 0; pointer-events: none; transition: opacity .2s;
+  z-index: 50; color: var(--ink);
+}
+.tip-wrap:hover .tip-box { opacity: 1; }
+
+/* ===================== SCROLL INDICATOR ===================== */
+.scroll-ind { width: 26px; height: 44px; border: 2px solid rgba(96,165,250,.3); border-radius: 13px; display: flex; justify-content: center; padding-top: 7px; }
+.scroll-dot { width: 5px; height: 5px; background: var(--c-bigo); border-radius: 50%; animation: float-a 1.6s ease-in-out infinite; }
+
+/* ===================== MOBILE ===================== */
+@media(max-width:768px) {
+  .cmp-row { grid-template-columns: 70px 1fr 1fr; }
+  .cmp-row > *:last-child { display: none; }
+  .hide-mobile { display: none!important; }
+  .stack-mobile { flex-direction: column!important; }
+}
+@media(max-width:520px) {
+  .ctrl-panel { flex-direction: column; }
+}
+
+/* ===================== SCAN LINE EFFECT ===================== */
+.scan-overlay {
+  position: fixed; inset: 0; pointer-events: none; z-index: 999;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,.03) 2px, rgba(0,0,0,.03) 4px);
+}
+</style>
+</head>
+<body>
+
+<!-- Scan line overlay -->
+<div class="scan-overlay"></div>
+
+<!-- ██████████████████████████████████████████ NAV -->
+<nav id="top-nav" style="position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(8,11,20,.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);transition:all .3s;">
+  <div style="max-width:1100px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#60a5fa,#c084fc);display:flex;align-items:center;justify-content:center;box-shadow:0 0 16px rgba(96,165,250,.4);">
+        <span style="color:white;font-family:'Fraunces',serif;font-size:.9rem;font-weight:700;">Θ</span>
+      </div>
+      <span style="font-size:.9rem;font-weight:800;color:var(--ink);">AsymptoLab <span style="font-size:.65rem;font-weight:600;color:var(--c-bigo);letter-spacing:.1em;">v2.0</span></span>
+    </div>
+    <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">
+      <a href="#hero"     class="nav-link">Intro</a>
+      <a href="#playground" class="nav-link">Playground</a>
+      <a href="#bigo"     class="nav-link" style="color:var(--c-bigo);">O</a>
+      <a href="#omega"    class="nav-link" style="color:var(--c-omega);">Ω</a>
+      <a href="#theta"    class="nav-link" style="color:var(--c-theta);">Θ</a>
+      <a href="#little"   class="nav-link">o/ω</a>
+      <a href="#compare"  class="nav-link">Compare</a>
+      <a href="#race"     class="nav-link">Race</a>
+      <a href="#quiz"     class="nav-link">Quiz</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ██████████████████████████████████████████ HERO -->
+<section id="hero" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:100px 24px 80px;text-align:center;position:relative;overflow:hidden;background:radial-gradient(ellipse at 20% 50%, rgba(96,165,250,.06) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(192,132,252,.06) 0%, transparent 50%), var(--bg);">
+
+  <!-- Animated grid -->
+  <svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.2;" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <pattern id="grid" width="52" height="52" patternUnits="userSpaceOnUse">
+        <path d="M 52 0 L 0 0 0 52" fill="none" stroke="rgba(96,165,250,.3)" stroke-width=".6"/>
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#grid)"/>
+    <line x1="10%" y1="65%" x2="90%" y2="65%" stroke="rgba(96,165,250,.2)" stroke-width="1.5" stroke-dasharray="6 4">
+      <animate attributeName="stroke-opacity" values=".1;.5;.1" dur="4s" repeatCount="indefinite"/>
+    </line>
+    <line x1="14%" y1="90%" x2="14%" y2="10%" stroke="rgba(96,165,250,.2)" stroke-width="1.5" stroke-dasharray="6 4">
+      <animate attributeName="stroke-opacity" values=".1;.5;.1" dur="4s" begin=".7s" repeatCount="indefinite"/>
+    </line>
+    <path d="M 130,580 Q 320,460 540,310 Q 720,170 960,40" fill="none" stroke="rgba(96,165,250,.4)" stroke-width="1.8" stroke-dasharray="900" stroke-dashoffset="900">
+      <animate attributeName="stroke-dashoffset" from="900" to="0" dur="3s" begin=".5s" fill="freeze"/>
+    </path>
+    <path d="M 130,580 Q 420,545 720,510 Q 870,490 980,470" fill="none" stroke="rgba(52,211,153,.3)" stroke-width="1.5" stroke-dasharray="900" stroke-dashoffset="900">
+      <animate attributeName="stroke-dashoffset" from="900" to="0" dur="3.5s" begin="1s" fill="freeze"/>
+    </path>
+    <path d="M 130,580 Q 300,540 570,500 Q 770,465 980,440" fill="none" stroke="rgba(192,132,252,.25)" stroke-width="1.2" stroke-dasharray="900" stroke-dashoffset="900">
+      <animate attributeName="stroke-dashoffset" from="900" to="0" dur="4s" begin="1.5s" fill="freeze"/>
+    </path>
+  </svg>
+
+  <!-- Floating particles -->
+  <div id="particles" style="position:absolute;inset:0;pointer-events:none;overflow:hidden;"></div>
+
+  <!-- Floating math symbols -->
+  <span style="position:absolute;top:12%;left:6%;font-family:'Fraunces',serif;font-size:3rem;font-weight:700;color:rgba(96,165,250,.12);animation:float-a 7s ease-in-out infinite;pointer-events:none;">O</span>
+  <span style="position:absolute;top:20%;right:8%;font-family:'Fraunces',serif;font-size:3.5rem;font-weight:700;color:rgba(52,211,153,.1);animation:float-b 8s ease-in-out infinite 1s;pointer-events:none;">Ω</span>
+  <span style="position:absolute;bottom:25%;left:4%;font-family:'Fraunces',serif;font-size:2.6rem;font-weight:700;color:rgba(192,132,252,.1);animation:float-c 9s ease-in-out infinite .5s;pointer-events:none;">Θ</span>
+  <span style="position:absolute;bottom:20%;right:5%;font-family:'Fraunces',serif;font-size:2.2rem;font-weight:700;color:rgba(248,113,113,.1);animation:float-a 11s ease-in-out infinite 2s;pointer-events:none;">ω</span>
+  <span style="position:absolute;top:62%;left:3%;font-family:'Fraunces',serif;font-size:2rem;font-weight:700;color:rgba(251,146,60,.1);animation:float-b 6s ease-in-out infinite 1.5s;pointer-events:none;">o</span>
+  <span style="position:absolute;top:9%;left:46%;font-family:'DM Mono',monospace;font-size:1.2rem;color:rgba(255,255,255,.07);animation:float-c 12s ease-in-out infinite;pointer-events:none;">n²</span>
+  <span style="position:absolute;bottom:38%;right:3%;font-family:'DM Mono',monospace;font-size:1.3rem;color:rgba(255,255,255,.06);animation:float-a 8s ease-in-out infinite 3s;pointer-events:none;">log n</span>
+
+  <!-- Hero content -->
+  <div style="position:relative;z-index:2;max-width:760px;margin:0 auto;">
+    <div style="display:flex;justify-content:center;margin-bottom:20px;">
+      <span class="sec-label">Interactive Learning Platform v2.0</span>
+    </div>
+
+    <h1 class="font-fraunces shimmer-text" style="font-size:clamp(2.6rem,6vw,4.6rem);font-weight:900;line-height:1.08;margin-bottom:20px;">
+      Asymptotic<br/><em style="font-style:italic;">Notations Lab</em>
+    </h1>
+
+    <p style="font-size:1rem;color:var(--ink-mid);max-width:540px;margin:0 auto 38px;line-height:1.8;">
+      Don't just <em>read</em> about complexity — <strong style="color:var(--c-bigo);">SEE</strong> it, <strong style="color:var(--c-theta);">interact</strong> with it, and <strong style="color:var(--c-omega);">understand</strong> it through live animated graphs, bound visualizations, growth races, and interactive quizzes.
+    </p>
+
+    <!-- CTA -->
+    <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:56px;">
+      <a href="#playground" style="background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:white;padding:.8rem 2rem;border-radius:999px;font-weight:700;font-size:.92rem;text-decoration:none;box-shadow:0 6px 30px rgba(96,165,250,.3);transition:all .3s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 12px 40px rgba(96,165,250,.45)'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 30px rgba(96,165,250,.3)'">Open Playground ⚡</a>
+      <a href="#quiz" style="background:transparent;color:var(--ink);padding:.8rem 2rem;border-radius:999px;font-weight:700;font-size:.92rem;text-decoration:none;border:1.5px solid var(--border2);transition:all .3s;" onmouseover="this.style.background='var(--surface2)';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='transparent';this.style.transform=''">Take Quiz →</a>
+    </div>
+
+    <!-- Stat pills -->
+    <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
+      <div class="glass" style="padding:14px 22px;border-radius:16px;animation:fadeUp .6s ease-out .2s both;">
+        <div style="font-family:'Fraunces',serif;font-size:1.8rem;font-weight:900;color:var(--c-bigo);line-height:1;">5</div>
+        <div style="font-size:.7rem;font-weight:600;color:var(--ink-soft);margin-top:2px;">Notations</div>
+      </div>
+      <div class="glass" style="padding:14px 22px;border-radius:16px;animation:fadeUp .6s ease-out .35s both;">
+        <div style="font-family:'Fraunces',serif;font-size:1.8rem;font-weight:900;color:var(--c-theta);line-height:1;">∞</div>
+        <div style="font-size:.7rem;font-weight:600;color:var(--ink-soft);margin-top:2px;">Interactive</div>
+      </div>
+      <div class="glass" style="padding:14px 22px;border-radius:16px;animation:fadeUp .6s ease-out .5s both;">
+        <div style="font-family:'Fraunces',serif;font-size:1.8rem;font-weight:900;color:var(--c-omega);line-height:1;">8</div>
+        <div style="font-size:.7rem;font-weight:600;color:var(--ink-soft);margin-top:2px;">Complexity Classes</div>
+      </div>
+      <div class="glass" style="padding:14px 22px;border-radius:16px;animation:fadeUp .6s ease-out .65s both;">
+        <div style="font-family:'Fraunces',serif;font-size:1.8rem;font-weight:900;color:var(--c-lito);line-height:1;">Live</div>
+        <div style="font-size:.7rem;font-weight:600;color:var(--ink-soft);margin-top:2px;">Graph Engine</div>
+      </div>
+    </div>
+
+    <!-- scroll indicator -->
+    <div style="margin-top:56px;display:flex;justify-content:center;">
+      <div class="scroll-ind"><div class="scroll-dot"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ██████████████████████████████████████████ INTRO -->
+<section id="what" style="padding:80px 24px;background:var(--bg2);text-align:center;border-top:1px solid var(--border);">
+  <div style="max-width:920px;margin:0 auto;">
+    <span class="sec-label">Section 01</span>
+    <h2 class="font-fraunces" style="font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:900;margin:12px 0 14px;">What Are Asymptotic Notations?</h2>
+    <p style="color:var(--ink-mid);max-width:580px;margin:0 auto 48px;line-height:1.8;font-size:.95rem;">Mathematical tools to describe how algorithms <strong>scale</strong> as input size grows toward infinity — ignoring constants and focusing purely on growth rates.</p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;max-width:860px;margin:0 auto 48px;">
+      <div class="glow-card card-bigo" style="padding:22px 16px;text-align:center;animation:fadeUp .5s ease-out .05s both;">
+        <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,rgba(96,165,250,.2),rgba(96,165,250,.05));border:1px solid rgba(96,165,250,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-family:'Fraunces',serif;font-size:1.4rem;font-weight:700;color:var(--c-bigo);box-shadow:0 0 20px rgba(96,165,250,.15);">O</div>
+        <div style="font-weight:800;font-size:.88rem;color:var(--ink);margin-bottom:4px;">Big O</div>
+        <div style="font-size:.72rem;color:var(--ink-soft);line-height:1.55;">Upper bound — worst case ceiling</div>
+      </div>
+      <div class="glow-card card-omega" style="padding:22px 16px;text-align:center;animation:fadeUp .5s ease-out .1s both;">
+        <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,rgba(52,211,153,.2),rgba(52,211,153,.05));border:1px solid rgba(52,211,153,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-family:'Fraunces',serif;font-size:1.4rem;font-weight:700;color:var(--c-omega);box-shadow:0 0 20px rgba(52,211,153,.15);">Ω</div>
+        <div style="font-weight:800;font-size:.88rem;color:var(--ink);margin-bottom:4px;">Big Omega</div>
+        <div style="font-size:.72rem;color:var(--ink-soft);line-height:1.55;">Lower bound — best case floor</div>
+      </div>
+      <div class="glow-card card-theta" style="padding:22px 16px;text-align:center;animation:fadeUp .5s ease-out .15s both;">
+        <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,rgba(192,132,252,.2),rgba(192,132,252,.05));border:1px solid rgba(192,132,252,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-family:'Fraunces',serif;font-size:1.4rem;font-weight:700;color:var(--c-theta);box-shadow:0 0 20px rgba(192,132,252,.15);">Θ</div>
+        <div style="font-weight:800;font-size:.88rem;color:var(--ink);margin-bottom:4px;">Big Theta</div>
+        <div style="font-size:.72rem;color:var(--ink-soft);line-height:1.55;">Tight bound — exact growth rate</div>
+      </div>
+      <div class="glow-card card-lito" style="padding:22px 16px;text-align:center;animation:fadeUp .5s ease-out .2s both;">
+        <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,rgba(251,146,60,.2),rgba(251,146,60,.05));border:1px solid rgba(251,146,60,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-family:'Fraunces',serif;font-size:1.4rem;font-weight:700;color:var(--c-lito);box-shadow:0 0 20px rgba(251,146,60,.15);">o</div>
+        <div style="font-weight:800;font-size:.88rem;color:var(--ink);margin-bottom:4px;">Little o</div>
+        <div style="font-size:.72rem;color:var(--ink-soft);line-height:1.55;">Strict upper — f/g → 0</div>
+      </div>
+      <div class="glow-card card-litw" style="padding:22px 16px;text-align:center;animation:fadeUp .5s ease-out .25s both;">
+        <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,rgba(248,113,113,.2),rgba(248,113,113,.05));border:1px solid rgba(248,113,113,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-family:'Fraunces',serif;font-size:1.4rem;font-weight:700;color:var(--c-litw);box-shadow:0 0 20px rgba(248,113,113,.15);">ω</div>
+        <div style="font-weight:800;font-size:.88rem;color:var(--ink);margin-bottom:4px;">Little ω</div>
+        <div style="font-size:.72rem;color:var(--ink-soft);line-height:1.55;">Strict lower — f/g → ∞</div>
+      </div>
+    </div>
+
+    <!-- Real world analogies -->
+    <div class="glass" style="border-radius:24px;padding:28px 32px;max-width:760px;margin:0 auto;text-align:left;">
+      <div style="font-size:.7rem;font-weight:700;color:var(--c-bigo);text-transform:uppercase;letter-spacing:.15em;margin-bottom:18px;">🌍 Real-World Analogies</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;">
+        <div>
+          <div style="font-weight:700;font-size:.82rem;color:var(--ink);margin-bottom:4px;">Big O — Worst Case</div>
+          <div style="font-size:.76rem;color:var(--ink-soft);line-height:1.6;">"Worst-case traffic estimate. I'll arrive <em>at most</em> in 2 hours."</div>
+        </div>
+        <div>
+          <div style="font-weight:700;font-size:.82rem;color:var(--ink);margin-bottom:4px;">Big Ω — Best Case</div>
+          <div style="font-size:.76rem;color:var(--ink-soft);line-height:1.6;">"I'll always spend <em>at least</em> 20 minutes cooking this meal."</div>
+        </div>
+        <div>
+          <div style="font-weight:700;font-size:.82rem;color:var(--ink);margin-bottom:4px;">Big Θ — Exact Rate</div>
+          <div style="font-size:.76rem;color:var(--ink-soft);line-height:1.6;">"The project takes <em>exactly</em> proportional to team size."</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ██████████████████████████████████████████ PLAYGROUND -->
+<section id="playground" style="padding:80px 24px;background:var(--bg);border-top:1px solid var(--border);text-align:center;">
+  <div style="max-width:1060px;margin:0 auto;">
+    <span class="sec-label">Interactive</span>
+    <h2 class="font-fraunces" style="font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:900;margin:12px 0 14px;">Function Playground</h2>
+    <p style="color:var(--ink-mid);max-width:520px;margin:0 auto 36px;line-height:1.8;font-size:.95rem;">Toggle complexity classes, adjust n-range, and hover the graph to inspect live values. Watch curves animate in real-time.</p>
+
+    <!-- Controls -->
+    <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:20px;" class="ctrl-panel">
+      <!-- Function toggles -->
+      <div class="glass" style="border-radius:14px;padding:14px 18px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+        <span style="font-size:.7rem;font-weight:700;color:var(--ink-soft);letter-spacing:.1em;text-transform:uppercase;margin-right:4px;">Functions:</span>
+        <button class="fn-toggle on" id="fn-logn"  onclick="toggleFn('logn')"  style="border-color:rgba(148,163,184,.3);color:#94a3b8;">log n</button>
+        <button class="fn-toggle on" id="fn-sqrtn" onclick="toggleFn('sqrtn')" style="border-color:rgba(52,211,153,.3);color:var(--c-omega);">√n</button>
+        <button class="fn-toggle on" id="fn-n"     onclick="toggleFn('n')"     style="border-color:rgba(96,165,250,.3);color:var(--c-bigo);">n</button>
+        <button class="fn-toggle on" id="fn-nlogn" onclick="toggleFn('nlogn')" style="border-color:rgba(192,132,252,.3);color:var(--c-theta);">n log n</button>
+        <button class="fn-toggle on" id="fn-n2"    onclick="toggleFn('n2')"    style="border-color:rgba(251,146,60,.3);color:var(--c-lito);">n²</button>
+        <button class="fn-toggle on" id="fn-2n"    onclick="toggleFn('2n')"    style="border-color:rgba(248,113,113,.3);color:var(--c-litw);">2ⁿ</button>
+      </div>
+      <!-- Range control -->
+      <div class="glass" style="border-radius:14px;padding:14px 18px;display:flex;align-items:center;gap:12px;min-width:220px;">
+        <span style="font-size:.7rem;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.1em;">n max:</span>
+        <input type="range" class="ctrl-slider" id="nmax-slider" min="10" max="100" value="50" oninput="updateGraph()" style="flex:1;"/>
+        <span class="font-mono" id="nmax-label" style="font-size:.78rem;color:var(--c-bigo);min-width:28px;">50</span>
+      </div>
+    </div>
+
+    <!-- Graph Canvas -->
+    <div class="graph-canvas" style="position:relative;width:100%;padding-top:52%;margin-bottom:20px;" id="graph-container">
+      <canvas id="main-graph" style="position:absolute;inset:0;width:100%;height:100%;border-radius:16px;" onmousemove="graphHover(event)" onmouseleave="graphLeave()"></canvas>
+      <div class="tooltip" id="graph-tooltip"></div>
+    </div>
+
+    <!-- Legend -->
+    <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;">
+      <div style="display:flex;align-items:center;gap:6px;font-size:.75rem;font-weight:600;color:#94a3b8;"><div style="width:24px;height:3px;border-radius:99px;background:#94a3b8;"></div>log n</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:.75rem;font-weight:600;color:var(--c-omega);"><div style="width:24px;height:3px;border-radius:99px;background:var(--c-omega);"></div>√n</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:.75rem;font-weight:600;color:var(--c-bigo);"><div style="width:24px;height:3px;border-radius:99px;background:var(--c-bigo);"></div>n</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:.75rem;font-weight:600;color:var(--c-theta);"><div style="width:24px;height:3px;border-radius:99px;background:var(--c-theta);"></div>n log n</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:.75rem;font-weight:600;color:var(--c-lito);"><div style="width:24px;height:3px;border-radius:99px;background:var(--c-lito);"></div>n²</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:.75rem;font-weight:600;color:var(--c-litw);"><div style="width:24px;height:3px;border-radius:99px;background:var(--c-litw);"></div>2ⁿ</div>
+    </div>
+  </div>
+</section>
+
+<!-- ██████████████████████████████████████████ BIG O -->
+<section id="bigo" style="padding:80px 24px;background:var(--bg2);border-top:1px solid var(--border);text-align:center;">
+  <div style="max-width:960px;margin:0 auto;">
+    <span class="sec-label" style="color:var(--c-bigo);">Section 02</span>
+    <div style="display:inline-flex;align-items:center;gap:14px;margin:12px 0 16px;">
+      <div style="width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,rgba(96,165,250,.25),rgba(96,165,250,.05));border:1px solid rgba(96,165,250,.4);display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:1.5rem;font-weight:700;color:var(--c-bigo);box-shadow:0 0 28px rgba(96,165,250,.25);">O</div>
+      <h2 class="font-fraunces" style="font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:900;">Big O Notation</h2>
+    </div>
+    <p style="color:var(--ink-mid);max-width:540px;margin:0 auto 12px;line-height:1.8;font-size:.95rem;"><strong>Upper Bound</strong> — the algorithm will never be <em>worse</em> than this. It's a ceiling on growth.</p>
+    <div class="font-mono" style="display:inline-block;padding:10px 24px;border-radius:12px;font-size:1rem;color:var(--c-bigo);background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.25);margin-bottom:44px;">
+      f(n) ≤ c · g(n) &nbsp;&nbsp; for all n ≥ n₀
+    </div>
+
+    <!-- Interactive Big O Graph -->
+    <div class="glass" style="border-radius:28px;padding:28px;margin-bottom:28px;">
+      <div style="font-size:.72rem;font-weight:700;color:var(--ink-soft);margin-bottom:16px;letter-spacing:.1em;text-transform:uppercase;">Upper Bound Mode — Visualizing f(n) = n² + n ∈ O(n²)</div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;justify-content:center;">
+        <!-- Graph -->
+        <div style="flex:1;min-width:280px;max-width:480px;position:relative;">
+          <canvas id="bigo-graph" width="480" height="300" style="width:100%;border-radius:12px;background:rgba(0,0,0,.25);cursor:crosshair;" onmousemove="notationHover(event,'bigo')" onmouseleave="notationLeave('bigo')"></canvas>
+          <div class="tooltip" id="bigo-tooltip"></div>
+        </div>
+        <!-- Controls -->
+        <div style="flex:0 0 200px;display:flex;flex-direction:column;gap:16px;">
+          <div>
+            <div style="font-size:.7rem;font-weight:700;color:var(--ink-soft);margin-bottom:8px;letter-spacing:.08em;text-transform:uppercase;">Constant c (upper)</div>
+            <input type="range" class="ctrl-slider" min="1" max="5" value="2" step="0.1" oninput="updateBigoC(this.value)" style="width:100%;"/>
+            <div style="display:flex;justify-content:space-between;margin-top:5px;">
+              <span class="font-mono" style="font-size:.7rem;color:var(--ink-pale);">c=1</span>
+              <span class="font-mono" id="bigo-c-label" style="font-size:.7rem;color:var(--c-bigo);">c=2</span>
+              <span class="font-mono" style="font-size:.7rem;color:var(--ink-pale);">c=5</span>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:.7rem;font-weight:700;color:var(--ink-soft);margin-bottom:8px;letter-spacing:.08em;text-transform:uppercase;">n₀ threshold</div>
+            <input type="range" class="ctrl-slider" min="1" max="30" value="5" oninput="updateBigoN0(this.value)" style="width:100%;"/>
+            <div style="display:flex;justify-content:space-between;margin-top:5px;">
+              <span class="font-mono" style="font-size:.7rem;color:var(--ink-pale);">1</span>
+              <span class="font-mono" id="bigo-n0-label" style="font-size:.7rem;color:var(--c-lito);">n₀=5</span>
+              <span class="font-mono" style="font-size:.7rem;color:var(--ink-pale);">30</span>
+            </div>
+          </div>
+          <!-- Proof status -->
+          <div class="glass-blue" style="border-radius:12px;padding:14px;">
+            <div id="bigo-status" style="font-size:.78rem;font-weight:700;color:var(--c-bigo);">✓ Valid Upper Bound</div>
+            <div style="font-size:.7rem;color:var(--ink-soft);margin-top:4px;line-height:1.5;" id="bigo-proof">f(n) ≤ 2·n² for all n ≥ 5</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Key facts -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;max-width:700px;margin:0 auto;">
+      <div class="glow-card card-bigo" style="padding:20px;text-align:left;">
+        <div style="font-size:1.3rem;margin-bottom:8px;">📐</div>
+        <div style="font-weight:700;font-size:.85rem;color:var(--ink);margin-bottom:4px;">Upper Bound</div>
+        <div style="font-size:.76rem;color:var(--ink-soft);line-height:1.6;">f(n) can never exceed c·g(n) for large enough n. g(n) acts as an asymptotic ceiling.</div>
+      </div>
+      <div class="glow-card card-bigo" style="padding:20px;text-align:left;">
+        <div style="font-size:1.3rem;margin-bottom:8px;">🔵</div>
+        <div style="font-weight:700;font-size:.85rem;color:var(--ink);margin-bottom:4px;">Worst Case</div>
+        <div style="font-size:.76rem;color:var(--ink-soft);line-height:1.6;">Used for worst-case guarantees. If O(n²), it will never be slower than quadratic.</div>
+      </div>
+      <div class="glow-card card-bigo" style="padding:20px;text-align:left;">
+        <div style="font-size:1.3rem;margin-bottom:8px;">✂️</div>
+        <div style="font-weight:700;font-size:.85rem;color:var(--ink);margin-bottom:4px;">Drop Constants</div>
+        <div style="font-size:.76rem;color:var(--ink-soft);line-height:1.6;">O(3n²) = O(n²). Constants and lower-order terms vanish as n → ∞.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ██████████████████████████████████████████ OMEGA -->
+<section id="omega" style="padding:80px 24px;background:var(--bg);border-top:1px solid var(--border);text-align:center;">
+  <div style="max-width:960px;margin:0 auto;">
+    <span class="sec-label" style="color:var(--c-omega);">Section 03</span>
+    <div style="display:inline-flex;align-items:center;gap:14px;margin:12px 0 16px;">
+      <div style="width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,rgba(52,211,153,.25),rgba(52,211,153,.05));border:1px solid rgba(52,211,153,.4);display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:1.5rem;font-weight:700;color:var(--c-omega);box-shadow:0 0 28px rgba(52,211,153,.25);">Ω</div>
+      <h2 class="font-fraunces" style="font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:900;">Big Omega Notation</h2>
+    </div>
+    <p style="color:var(--ink-mid);max-width:540px;margin:0 auto 12px;line-height:1.8;font-size:.95rem;"><strong>Lower Bound</strong> — the algorithm will never be <em>better</em> than this. It's a floor on performance.</p>
+    <div class="font-mono" style="display:inline-block;padding:10px 24px;border-radius:12px;font-size:1rem;color:var(--c-omega);background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.25);margin-bottom:44px;">
+      f(n) ≥ c · g(n) &nbsp;&nbsp; for all n ≥ n₀
+    </div>
+
+    <div class="glass" style="border-radius:28px;padding:28px;margin-bottom:28px;">
+      <div style="font-size:.72rem;font-weight:700;color:var(--ink-soft);margin-bottom:16px;letter-spacing:.1em;text-transform:uppercase;">Lower Bound Mode — f(n) = n² + n ∈ Ω(n²)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;justify-content:center;">
+        <div style="flex:1;min-width:280px;max-width:480px;position:relative;">
+          <canvas id="omega-graph" width="480" height="300" style="width:100%;border-radius:12px;background:rgba(0,0,0,.25);cursor:crosshair;" onmousemove="notationHover(event,'omega')" onmouseleave="notationLeave('omega')"></canvas>
+          <div class="tooltip" id="omega-tooltip"></div>
+        </div>
+        <div style="flex:0 0 200px;display:flex;flex-direction:column;gap:16px;">
+          <div>
+            <div style="font-size:.7rem;font-weight:700;color:var(--ink-soft);margin-bottom:8px;letter-spacing:.08em;text-transform:uppercase;">Constant c (lower)</div>
+            <input type="range" class="ctrl-slider green" min="0.1" max="2" value="0.8" step="0.05" oninput="updateOmegaC(this.value)" style="width:100%;"/>
+            <div style="display:flex;justify-content:space-between;margin-top:5px;">
+              <span class="font-mono" style="font-size:.7rem;color:var(--ink-pale);">0.1</span>
+              <span class="font-mono" id="omega-c-label" style="font-size:.7rem;color:var(--c-omega);">c=0.8</span>
+              <span class="font-mono" style="font-size:.7rem;color:var(--ink-pale);">2</span>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:.7rem;font-weight:700;color:var(--ink-soft);margin-bottom:8px;letter-spacing:.08em;text-transform:uppercase;">n₀ threshold</div>
+            <input type="range" class="ctrl-slider green" min="1" max="30" value="3" oninput="updateOmegaN0(this.value)" style="width:100%;"/>
+            <div style="display:flex;justify-content:space-between;margin-top:5px;">
+              <span class="font-mono" style="font-size:.7rem;color:var(--ink-pale);">1</span>
+              <span class="font-mono" id="omega-n0-label" style="font-size:.7rem;color:var(--c-lito);">n₀=3</span>
+              <span class="font-mono" style="font-size:.7rem;color:var(--ink-pale);">30</span>
+            </div>
+          </div>
+          <div style="background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.2);border-radius:12px;padding:14px;">
+            <div id="omega-status" style="font-size:.78rem;font-weight:700;color:var(--c-omega);">✓ Valid Lower Bound</div>
+            <div style="font-size:.7rem;color:var(--ink-soft);margin-top:4px;line-height:1.5;" id="omega-proof">f(n) ≥ 0.8·n² for all n ≥ 3</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;max-width:700px;margin:0 auto;">
+      <div class="glow-card card-omega" style="padding:20px;text-align:left;">
+        <div style="font-size:1.3rem;margin-bottom:8px;">📏</div>
+        <div style="font-weight:700;font-size:.85rem;color:var(--ink);margin-bottom:4px;">Lower Bound</div>
+        <div style="font-size:.76rem;color:var(--ink-soft);line-height:1.6;">f(n) is always at least c·g(n) for large n. g(n) is an asymptotic floor.</div>
+      </div>
+      <div class="glow-card card-omega" style="padding:20px;text-align:left;">
+        <div style="font-size:1.3rem;margin-bottom:8px;">🟢</div>
+        <div style="font-weight:700;font-size:.85rem;color:var(--ink);margin-bottom:4px;">Best Case</div>
+        <div style="font-size:.76rem;color:var(--ink-soft);line-height:1.6;">Used for best-case guarantees. Ω(n) means it can never be faster than linear.</div>
+      </div>
+      <div class="glow-card card-omega" style="padding:20px;text-align:left;">
+        <div style="font-size:1.3rem;margin-bottom:8px;">🔄</div>
+        <div style="font-weight:700;font-size:.85rem;color:var(--ink);margin-bottom:4px;">Dual of Big O</div>
+        <div style="font-size:.76rem;color:var(--ink-soft);line-height:1.6;">f ∈ O(g) iff g ∈ Ω(f). They are mirror images of each other.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ██████████████████████████████████████████ THETA -->
+<section id="theta" style="padding:80px 24px;background:var(--bg2);border-top:1px solid var(--border);text-align:center;">
+  <div style="max-width:960px;margin:0 auto;">
+    <span class="sec-label" style="color:var(--c-theta);">Section 04</span>
+    <div style="display:inline-flex;align-items:center;gap:14px;margin:12px 0 16px;">
+      <div style="width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,rgba(192,132,252,.25),rgba(192,132,252,.05));border:1px solid rgba(192,132,252,.4);display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:1.5rem;font-weight:700;color:var(--c-theta);box-shadow:0 0 28px rgba(192,132,252,.25);">Θ</div>
+      <h2 class="font-fraunces" style="font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:900;">Big Theta Notation</h2>
+    </div>
+    <p style="color:var(--ink-mid);max-width:540px;margin:0 auto 12px;line-height:1.8;font-size:.95rem;"><strong>Tight Bound</strong> — f(n) is <em>sandwiched</em> between two scaled versions of g(n). The most precise notation.</p>
+    <div class="font-mono" style="display:inline-block;padding:10px 24px;border-radius:12px;font-size:.96rem;color:var(--c-theta);background:rgba(192,132,252,.08);border:1px solid rgba(192,132,252,.25);margin-bottom:44px;">
+      c₁·g(n) ≤ f(n) ≤ c₂·g(n) &nbsp;&nbsp; for all n ≥ n₀
+    </div>
+
+    <div class="glass" style="border-radius:28px;padding:28px;margin-bottom:28px;">
+      <div style="font-size:.72rem;font-weight:700;color:var(--ink-soft);margin-bottom:16px;letter-spacing:.1em;text-transform:uppercase;">Tight Bound Mode — f(n) = n² + n ∈ Θ(n²) — trapped between c₁n² and c₂n²</div>
+      <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;justify-content:center;">
+        <div style="flex:1;min-width:280px;max-width:480px;position:relative;">
+          <canvas id="theta-graph" width="480" height="300" style="width:100%;border-radius:12px;background:rgba(0,0,0,.25);cursor:crosshair;" onmousemove="notationHover(event,'theta')" onmouseleave="notationLeave('theta')"></canvas>
+          <div class="tooltip" id="theta-tooltip"></div>
+        </div>
+        <div style="flex:0 0 200px;display:flex;flex-direction:column;gap:14px;">
+          <div>
+            <div style="font-size:.7rem;font-weight:700;color:var(--ink-soft);margin-bottom:7px;letter-spacing:.08em;text-transform:uppercase;">c₁ (lower constant)</div>
+            <input type="range" class="ctrl-slider green" min="0.1" max="1" value="0.7" step="0.05" oninput="updateThetaC1(this.value)" style="width:100%;"/>
+            <span class="font-mono" id="theta-c1-label" style="font-size:.72rem;color:var(--c-omega);">c₁ = 0.7</span>
+          </div>
+          <div>
+            <div style="font-size:.7rem;font-weight:700;color:var(--ink-soft);margin-bottom:7px;letter-spacing:.08em;text-transform:uppercase;">c₂ (upper constant)</div>
+            <input type="range" class="ctrl-slider purple" min="1.1" max="4" value="2" step="0.1" oninput="updateThetaC2(this.value)" style="width:100%;"/>
+            <span class="font-mono" id="theta-c2-label" style="font-size:.72rem;color:var(--c-theta);">c₂ = 2.0</span>
+          </div>
+          <div>
+            <div style="font-size:.7rem;font-weight:700;color:var(--ink-soft);margin-bottom:7px;letter-spacing:.08em;text-transform:uppercase;">n₀ threshold</div>
+            <input type="range" class="ctrl-slider orange" min="1" max="25" value="4" oninput="updateThetaN0(this.value)" style="width:100%;"/>
+            <span class="font-mono" id="theta-n0-label" style="font-size:.72rem;color:var(--c-lito);">n₀ = 4</span>
+          </div>
+          <div style="background:rgba(192,132,252,.06);border:1px solid rgba(192,132,252,.2);border-radius:12px;padding:14px;">
+            <div id="theta-status" style="font-size:.78rem;font-weight:700;color:var(--c-theta);">✓ Tight Bound Holds</div>
+            <div style="font-size:.68rem;color:var(--ink-soft);margin-top:4px;line-height:1.6;" id="theta-proof">0.7n² ≤ f(n) ≤ 2n² for n ≥ 4</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;max-width:700px;margin:0 auto;">
+      <div class="glow-card card-theta" style="padding:20px;text-align:left;">
+        <div style="font-size:1.3rem;margin-bottom:8px;">🎯</div>
+        <div style="font-weight:700;font-size:.85rem;color:var(--ink);margin-bottom:4px;">Tight Bound</div>
+        <div style="font-size:.76rem;color:var(--ink-soft);line-height:1.6;">f = Θ(g) means g perfectly captures the growth rate — not just a bound, but the exact class.</div>
+      </div>
+      <div class="glow-card card-theta" style="padding:20px;text-align:left;">
+        <div style="font-size:1.3rem;margin-bottom:8px;">🔗</div>
+        <div style="font-weight:700;font-size:.85rem;color:var(--ink);margin-bottom:4px;">Both Directions</div>
+        <div style="font-size:.76rem;color:var(--ink-soft);line-height:1.6;">f ∈ Θ(g) ⟺ f ∈ O(g) AND f ∈ Ω(g). It's the intersection of both.</div>
+      </div>
+      <div class="glow-card card-theta" style="padding:20px;text-align:left;">
+        <div style="font-size:1.3rem;margin-bottom:8px;">⚡</div>
+        <div style="font-weight:700;font-size:.85rem;color:var(--ink);margin-bottom:4px;">Average Case</div>
+        <div style="font-size:.76rem;color:var(--ink-soft);line-height:1.6;">Θ notation is often used to describe average-case behavior with precision.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ██████████████████████████████████████████ LITTLE o & ω -->
+<section id="little" style="padding:80px 24px;background:var(--bg);border-top:1px solid var(--border);text-align:center;">
+  <div style="max-width:940px;margin:0 auto;">
+    <span class="sec-label">Section 05</span>
+    <h2 class="font-fraunces" style="font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:900;margin:12px 0 14px;">Little o &amp; Little ω</h2>
+    <p style="color:var(--ink-mid);max-width:560px;margin:0 auto 48px;line-height:1.8;font-size:.95rem;"><em>Strict</em> asymptotic bounds — the function doesn't just stay bounded, it becomes <em>insignificant</em> or completely <em>dominant</em> in the limit.</p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px;max-width:860px;margin:0 auto 48px;">
+
+      <!-- Little o -->
+      <div class="glass card-lito" style="border-radius:24px;padding:28px 24px;text-align:left;">
+        <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <div style="width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,rgba(251,146,60,.25),rgba(251,146,60,.05));border:1px solid rgba(251,146,60,.4);display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:1.1rem;font-weight:700;color:var(--c-lito);">o</div>
+          <div>
+            <div style="font-weight:800;font-size:1rem;color:var(--ink);">Little o</div>
+            <div style="font-size:.74rem;color:var(--ink-soft);">Strict Upper Bound</div>
+          </div>
+        </div>
+        <div class="font-mono" style="border-radius:10px;padding:8px 14px;font-size:.84rem;color:var(--c-lito);background:rgba(251,146,60,.08);border:1px solid rgba(251,146,60,.2);margin-bottom:14px;">
+          lim<sub>n→∞</sub> f(n)/g(n) = 0
+        </div>
+        <p style="font-size:.82rem;color:var(--ink-soft);line-height:1.7;margin-bottom:16px;">f grows <em>strictly slower</em> than g. The ratio f/g shrinks to zero — f becomes negligible relative to g. <strong>n ∈ o(n²)</strong> because n/n² = 1/n → 0.</p>
+        <!-- Ratio bars -->
+        <div style="background:rgba(0,0,0,.2);border-radius:12px;padding:14px;">
+          <div style="font-size:.68rem;font-weight:600;color:var(--ink-soft);margin-bottom:10px;text-transform:uppercase;letter-spacing:.08em;">Ratio f(n)/g(n) = n/n² → 0</div>
+          <div style="display:flex;flex-direction:column;gap:7px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="font-mono" style="font-size:.68rem;color:var(--ink-pale);width:48px;">n=10</span>
+              <div class="bar-track" style="height:10px;"><div class="bar-fill" style="width:90%;background:linear-gradient(90deg,var(--c-lito),rgba(251,146,60,.4));animation-delay:.1s;"></div></div>
+              <span class="font-mono" style="font-size:.68rem;color:var(--c-lito);width:36px;">0.100</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="font-mono" style="font-size:.68rem;color:var(--ink-pale);width:48px;">n=100</span>
+              <div class="bar-track" style="height:10px;"><div class="bar-fill" style="width:45%;background:linear-gradient(90deg,var(--c-lito),rgba(251,146,60,.4));animation-delay:.3s;"></div></div>
+              <span class="font-mono" style="font-size:.68rem;color:var(--c-lito);width:36px;">0.010</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="font-mono" style="font-size:.68rem;color:var(--ink-pale);width:48px;">n=1k</span>
+              <div class="bar-track" style="height:10px;"><div class="bar-fill" style="width:8%;background:linear-gradient(90deg,var(--c-lito),rgba(251,146,60,.4));animation-delay:.5s;"></div></div>
+              <span class="font-mono" style="font-size:.68rem;color:var(--c-lito);width:36px;">0.001</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="font-mono" style="font-size:.68rem;color:var(--ink-pale);width:48px;">n→∞</span>
+              <div class="bar-track" style="height:10px;"><div class="bar-fill" style="width:.5%;background:var(--c-lito);animation-delay:.7s;"></div></div>
+              <span class="font-mono" style="font-size:.68rem;color:var(--c-lito);width:36px;">→ 0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Little omega -->
+      <div class="glass card-litw" style="border-radius:24px;padding:28px 24px;text-align:left;">
+        <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <div style="width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,rgba(248,113,113,.25),rgba(248,113,113,.05));border:1px solid rgba(248,113,113,.4);display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:1.1rem;font-weight:700;color:var(--c-litw);">ω</div>
+          <div>
+            <div style="font-weight:800;font-size:1rem;color:var(--ink);">Little omega</div>
+            <div style="font-size:.74rem;color:var(--ink-soft);">Strict Lower Bound</div>
+          </div>
+        </div>
+        <div class="font-mono" style="border-radius:10px;padding:8px 14px;font-size:.84rem;color:var(--c-litw);background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);margin-bottom:14px;">
+          lim<sub>n→∞</sub> f(n)/g(n) = ∞
+        </div>
+        <p style="font-size:.82rem;color:var(--ink-soft);line-height:1.7;margin-bottom:16px;">f grows <em>strictly faster</em> than g. The ratio f/g explodes to infinity — f completely dominates g. <strong>n² ∈ ω(n)</strong> because n²/n = n → ∞.</p>
+        <div style="background:rgba(0,0,0,.2);border-radius:12px;padding:14px;">
+          <div style="font-size:.68rem;font-weight:600;color:var(--ink-soft);margin-bottom:10px;text-transform:uppercase;letter-spacing:.08em;">Ratio f(n)/g(n) = n²/n → ∞</div>
+          <div style="display:flex;flex-direction:column;gap:7px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="font-mono" style="font-size:.68rem;color:var(--ink-pale);width:48px;">n=10</span>
+              <div class="bar-track" style="height:10px;background:rgba(248,113,113,.1);"><div class="bar-fill" style="width:8%;background:linear-gradient(90deg,var(--c-litw),rgba(248,113,113,.5));animation-delay:.1s;"></div></div>
+              <span class="font-mono" style="font-size:.68rem;color:var(--c-litw);width:36px;">10</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="font-mono" style="font-size:.68rem;color:var(--ink-pale);width:48px;">n=100</span>
+              <div class="bar-track" style="height:10px;background:rgba(248,113,113,.1);"><div class="bar-fill" style="width:40%;background:linear-gradient(90deg,var(--c-litw),rgba(248,113,113,.5));animation-delay:.3s;"></div></div>
+              <span class="font-mono" style="font-size:.68rem;color:var(--c-litw);width:36px;">100</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="font-mono" style="font-size:.68rem;color:var(--ink-pale);width:48px;">n=1k</span>
+              <div class="bar-track" style="height:10px;background:rgba(248,113,113,.1);"><div class="bar-fill" style="width:85%;background:linear-gradient(90deg,var(--c-litw),rgba(248,113,113,.5));animation-delay:.5s;"></div></div>
+              <span class="font-mono" style="font-size:.68rem;color:var(--c-litw);width:36px;">1000</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="font-mono" style="font-size:.68rem;color:var(--ink-pale);width:48px;">n→∞</span>
+              <div class="bar-track" style="height:10px;background:rgba(248,113,113,.1);"><div class="bar-fill" style="width:100%;background:var(--c-litw);animation-delay:.7s;"></div></div>
+              <span class="font-mono" style="font-size:.68rem;color:var(--c-litw);width:36px;">→ ∞</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Big vs Little comparison -->
+    <div class="glass" style="border-radius:20px;padding:24px 28px;max-width:660px;margin:0 auto;">
+      <div style="font-size:.7rem;font-weight:700;color:var(--ink-soft);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;">⚡ Big vs Little — Key Difference</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;text-align:left;">
+        <div>
+          <div style="font-weight:700;font-size:.82rem;color:var(--c-bigo);margin-bottom:6px;">O(g) — Big O</div>
+          <div style="font-size:.76rem;color:var(--ink-soft);line-height:1.65;">Allows f/g to stay bounded (f/g → 5 is fine). f can grow at the <em>same rate</em> as g.</div>
+        </div>
+        <div>
+          <div style="font-weight:700;font-size:.82rem;color:var(--c-lito);margin-bottom:6px;">o(g) — Little o</div>
+          <div style="font-size:.76rem;color:var(--ink-soft);line-height:1.65;">Requires f/g → 0. f must grow <em>strictly slower</em>. Much stricter condition.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ██████████████████████████████████████████ COMPARE -->
+<section id="compare" style="padding:80px 24px;background:var(--bg2);border-top:1px solid var(--border);text-align:center;">
+  <div style="max-width:900px;margin:0 auto;">
+    <span class="sec-label">Section 06</span>
+    <h2 class="font-fraunces" style="font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:900;margin:12px 0 14px;">Side-by-Side Comparison</h2>
+    <p style="color:var(--ink-mid);max-width:480px;margin:0 auto 44px;line-height:1.8;font-size:.95rem;">All five notations at a glance — bounds, meaning, and the limit condition each satisfies.</p>
+
+    <div class="glass" style="border-radius:24px;padding:24px;max-width:820px;margin:0 auto 32px;">
+      <!-- Header -->
+      <div class="cmp-row" style="background:var(--surface2)!important;font-weight:700;font-size:.74rem;color:var(--ink-soft);">
+        <div>Notation</div><div>Meaning</div><div>Condition</div><div>Limit Rule</div>
+      </div>
+      <!-- Big O -->
+      <div class="cmp-row" style="animation-delay:.1s;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,rgba(96,165,250,.3),rgba(96,165,250,.05));border:1px solid rgba(96,165,250,.4);display:flex;align-items:center;justify-content:center;color:var(--c-bigo);font-family:'Fraunces',serif;font-weight:700;font-size:.9rem;">O</div>
+          <span class="font-mono" style="font-size:.76rem;color:var(--c-bigo);">O(g)</span>
+        </div>
+        <div style="font-size:.8rem;color:var(--ink);font-weight:600;">Upper Bound</div>
+        <div style="font-size:.73rem;color:var(--ink-mid);font-family:'DM Mono',monospace;">f(n) ≤ c·g(n)</div>
+        <div style="font-size:.73rem;color:var(--c-bigo);font-family:'DM Mono',monospace;">lim ≤ L &lt; ∞</div>
+      </div>
+      <!-- Omega -->
+      <div class="cmp-row" style="animation-delay:.18s;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,rgba(52,211,153,.3),rgba(52,211,153,.05));border:1px solid rgba(52,211,153,.4);display:flex;align-items:center;justify-content:center;color:var(--c-omega);font-family:'Fraunces',serif;font-weight:700;font-size:.9rem;">Ω</div>
+          <span class="font-mono" style="font-size:.76rem;color:var(--c-omega);">Ω(g)</span>
+        </div>
+        <div style="font-size:.8rem;color:var(--ink);font-weight:600;">Lower Bound</div>
+        <div style="font-size:.73rem;color:var(--ink-mid);font-family:'DM Mono',monospace;">f(n) ≥ c·g(n)</div>
+        <div style="font-size:.73rem;color:var(--c-omega);font-family:'DM Mono',monospace;">lim ≥ L &gt; 0</div>
+      </div>
+      <!-- Theta -->
+      <div class="cmp-row" style="animation-delay:.26s;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,rgba(192,132,252,.3),rgba(192,132,252,.05));border:1px solid rgba(192,132,252,.4);display:flex;align-items:center;justify-content:center;color:var(--c-theta);font-family:'Fraunces',serif;font-weight:700;font-size:.9rem;">Θ</div>
+          <span class="font-mono" style="font-size:.76rem;color:var(--c-theta);">Θ(g)</span>
+        </div>
+        <div style="font-size:.8rem;color:var(--ink);font-weight:600;">Tight Bound</div>
+        <div style="font-size:.73rem;color:var(--ink-mid);font-family:'DM Mono',monospace;">c₁g ≤ f ≤ c₂g</div>
+        <div style="font-size:.73rem;color:var(--c-theta);font-family:'DM Mono',monospace;">lim = L (finite)</div>
+      </div>
+      <!-- little o -->
+      <div class="cmp-row" style="animation-delay:.34s;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,rgba(251,146,60,.3),rgba(251,146,60,.05));border:1px solid rgba(251,146,60,.4);display:flex;align-items:center;justify-content:center;color:var(--c-lito);font-family:'Fraunces',serif;font-weight:700;font-size:.9rem;">o</div>
+          <span class="font-mono" style="font-size:.76rem;color:var(--c-lito);">o(g)</span>
+        </div>
+        <div style="font-size:.8rem;color:var(--ink);font-weight:600;">Strict Upper</div>
+        <div style="font-size:.73rem;color:var(--ink-mid);font-family:'DM Mono',monospace;">f grows slower</div>
+        <div style="font-size:.73rem;color:var(--c-lito);font-family:'DM Mono',monospace;">lim = 0</div>
+      </div>
+      <!-- little omega -->
+      <div class="cmp-row" style="animation-delay:.42s;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,rgba(248,113,113,.3),rgba(248,113,113,.05));border:1px solid rgba(248,113,113,.4);display:flex;align-items:center;justify-content:center;color:var(--c-litw);font-family:'Fraunces',serif;font-weight:700;font-size:.9rem;">ω</div>
+          <span class="font-mono" style="font-size:.76rem;color:var(--c-litw);">ω(g)</span>
+        </div>
+        <div style="font-size:.8rem;color:var(--ink);font-weight:600;">Strict Lower</div>
+        <div style="font-size:.73rem;color:var(--ink-mid);font-family:'DM Mono',monospace;">f grows faster</div>
+        <div style="font-size:.73rem;color:var(--c-litw);font-family:'DM Mono',monospace;">lim = ∞</div>
+      </div>
+    </div>
+
+    <!-- Relationships -->
+    <div class="glass" style="border-radius:18px;padding:18px 24px;max-width:640px;margin:0 auto;text-align:left;">
+      <div style="font-size:.7rem;font-weight:700;color:var(--c-bigo);text-transform:uppercase;letter-spacing:.12em;margin-bottom:12px;">🔗 Logical Relationships</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;">
+        <div class="font-mono" style="font-size:.73rem;color:var(--ink-soft);background:var(--surface);border-radius:9px;padding:7px 12px;border:1px solid var(--border);">Θ(g) = O(g) ∩ Ω(g)</div>
+        <div class="font-mono" style="font-size:.73rem;color:var(--ink-soft);background:var(--surface);border-radius:9px;padding:7px 12px;border:1px solid var(--border);">o(g) ⊂ O(g)</div>
+        <div class="font-mono" style="font-size:.73rem;color:var(--ink-soft);background:var(--surface);border-radius:9px;padding:7px 12px;border:1px solid var(--border);">ω(g) ⊂ Ω(g)</div>
+        <div class="font-mono" style="font-size:.73rem;color:var(--ink-soft);background:var(--surface);border-radius:9px;padding:7px 12px;border:1px solid var(--border);">f∈O(g) ⟺ g∈Ω(f)</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ██████████████████████████████████████████ GROWTH RANKING -->
+<section id="rank" style="padding:80px 24px;background:var(--bg);border-top:1px solid var(--border);text-align:center;">
+  <div style="max-width:860px;margin:0 auto;">
+    <span class="sec-label">Section 07</span>
+    <h2 class="font-fraunces" style="font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:900;margin:12px 0 14px;">Complexity Growth Ranking</h2>
+    <p style="color:var(--ink-mid);max-width:500px;margin:0 auto 44px;line-height:1.8;font-size:.95rem;">From slowest to fastest growing — the canonical ordering every CS student must know.</p>
+
+    <div class="glass" style="border-radius:28px;padding:28px;margin-bottom:36px;max-width:760px;margin-left:auto;margin-right:auto;">
+      <div style="display:grid;grid-template-columns:110px 1fr 100px;gap:10px;align-items:center;margin-bottom:16px;padding:0 4px;">
+        <span style="font-size:.68rem;font-weight:700;color:var(--ink-pale);text-transform:uppercase;letter-spacing:.1em;text-align:left;">Complexity</span>
+        <span style="font-size:.68rem;font-weight:700;color:var(--ink-pale);text-transform:uppercase;letter-spacing:.1em;text-align:left;">Relative Growth (n=1000)</span>
+        <span style="font-size:.68rem;font-weight:700;color:var(--ink-pale);text-transform:uppercase;letter-spacing:.1em;text-align:right;">Class</span>
+      </div>
+
+      <!-- O(1) -->
+      <div style="display:grid;grid-template-columns:110px 1fr 100px;gap:10px;align-items:center;padding:10px 4px;border-radius:11px;background:rgba(52,211,153,.05);margin-bottom:7px;animation:fadeUp .4s ease-out .05s both;">
+        <span class="font-mono" style="font-size:.8rem;font-weight:600;color:var(--c-omega);text-align:left;">O(1)</span>
+        <div class="bar-track"><div class="bar-fill" style="width:.5%;background:linear-gradient(90deg,var(--c-omega),rgba(52,211,153,.3));animation-delay:.1s;"></div></div>
+        <span style="font-size:.7rem;font-weight:600;color:var(--c-omega);text-align:right;">Constant</span>
+      </div>
+
+      <!-- O(log n) -->
+      <div style="display:grid;grid-template-columns:110px 1fr 100px;gap:10px;align-items:center;padding:10px 4px;border-radius:11px;margin-bottom:7px;animation:fadeUp .4s ease-out .1s both;">
+        <span class="font-mono" style="font-size:.8rem;font-weight:600;color:#2dd4bf;text-align:left;">O(log n)</span>
+        <div class="bar-track"><div class="bar-fill" style="width:1%;background:linear-gradient(90deg,#2dd4bf,rgba(45,212,191,.3));animation-delay:.2s;"></div></div>
+        <span style="font-size:.7rem;font-weight:600;color:#2dd4bf;text-align:right;">Logarithmic</span>
+      </div>
+
+      <!-- O(√n) -->
+      <div style="display:grid;grid-template-columns:110px 1fr 100px;gap:10px;align-items:center;padding:10px 4px;border-radius:11px;background:rgba(96,165,250,.04);margin-bottom:7px;animation:fadeUp .4s ease-out .15s both;">
+        <span class="font-mono" style="font-size:.8rem;font-weight:600;color:var(--c-bigo);text-align:left;">O(√n)</span>
+        <div class="bar-track"><div class="bar-fill" style="width:3%;background:linear-gradient(90deg,var(--c-bigo),rgba(96,165,250,.3));animation-delay:.3s;"></div></div>
+        <span style="font-size:.7rem;font-weight:600;color:var(--c-bigo);text-align:right;">Sub-linear</span>
+      </div>
+
+      <!-- O(n) -->
+      <div style="display:grid;grid-template-columns:110px 1fr 100px;gap:10px;align-items:center;padding:10px 4px;border-radius:11px;margin-bottom:7px;animation:fadeUp .4s ease-out .2s both;">
+        <span class="font-mono" style="font-size:.8rem;font-weight:600;color:#818cf8;text-align:left;">O(n)</span>
+        <div class="bar-track"><div class="bar-fill" style="width:10%;background:linear-gradient(90deg,#818cf8,rgba(129,140,248,.3));animation-delay:.4s;"></div></div>
+        <span style="font-size:.7rem;font-weight:600;color:#818cf8;text-align:right;">Linear</span>
+      </div>
+
+      <!-- O(n log n) -->
+      <div style="display:grid;grid-template-columns:110px 1fr 100px;gap:10px;align-items:center;padding:10px 4px;border-radius:11px;background:rgba(192,132,252,.04);margin-bottom:7px;animation:fadeUp .4s ease-out .25s both;">
+        <span class="font-mono" style="font-size:.8rem;font-weight:600;color:var(--c-theta);text-align:left;">O(n log n)</span>
+        <div class="bar-track"><div class="bar-fill" style="width:20%;background:linear-gradient(90deg,var(--c-theta),rgba(192,132,252,.3));animation-delay:.5s;"></div></div>
+        <span style="font-size:.7rem;font-weight:600;color:var(--c-theta);text-align:right;">Linearithmic</span>
+      </div>
+
+      <!-- O(n²) -->
+      <div style="display:grid;grid-template-columns:110px 1fr 100px;gap:10px;align-items:center;padding:10px 4px;border-radius:11px;margin-bottom:7px;animation:fadeUp .4s ease-out .3s both;">
+        <span class="font-mono" style="font-size:.8rem;font-weight:600;color:var(--c-lito);text-align:left;">O(n²)</span>
+        <div class="bar-track"><div class="bar-fill" style="width:46%;background:linear-gradient(90deg,var(--c-lito),rgba(251,146,60,.3));animation-delay:.6s;"></div></div>
+        <span style="font-size:.7rem;font-weight:600;color:var(--c-lito);text-align:right;">Quadratic</span>
+      </div>
+
+      <!-- O(n³) -->
+      <div style="display:grid;grid-template-columns:110px 1fr 100px;gap:10px;align-items:center;padding:10px 4px;border-radius:11px;background:rgba(251,146,60,.04);margin-bottom:7px;animation:fadeUp .4s ease-out .35s both;">
+        <span class="font-mono" style="font-size:.8rem;font-weight:600;color:#f59e0b;text-align:left;">O(n³)</span>
+        <div class="bar-track"><div class="bar-fill" style="width:70%;background:linear-gradient(90deg,#f59e0b,rgba(245,158,11,.3));animation-delay:.7s;"></div></div>
+        <span style="font-size:.7rem;font-weight:600;color:#f59e0b;text-align:right;">Cubic</span>
+      </div>
+
+      <!-- O(2ⁿ) -->
+      <div style="display:grid;grid-template-columns:110px 1fr 100px;gap:10px;align-items:center;padding:10px 4px;border-radius:11px;margin-bottom:7px;animation:fadeUp .4s ease-out .4s both;">
+        <span class="font-mono" style="font-size:.8rem;font-weight:600;color:var(--c-litw);text-align:left;">O(2ⁿ)</span>
+        <div class="bar-track"><div class="bar-fill" style="width:90%;background:linear-gradient(90deg,var(--c-litw),rgba(248,113,113,.3));animation-delay:.8s;"></div></div>
+        <span style="font-size:.7rem;font-weight:600;color:var(--c-litw);text-align:right;">Exponential</span>
+      </div>
+
+      <!-- O(n!) -->
+      <div style="display:grid;grid-template-columns:110px 1fr 100px;gap:10px;align-items:center;padding:10px 4px;border-radius:11px;background:rgba(248,113,113,.06);animation:fadeUp .4s ease-out .45s both;">
+        <span class="font-mono" style="font-size:.8rem;font-weight:600;color:#ef4444;text-align:left;">O(n!)</span>
+        <div class="bar-track"><div class="bar-fill" style="width:100%;background:linear-gradient(90deg,#991b1b,#ef4444);animation-delay:.9s;"></div></div>
+        <span style="font-size:.7rem;font-weight:600;color:#ef4444;text-align:right;">Factorial 🔥</span>
+      </div>
+    </div>
+
+    <!-- Growth curves SVG -->
+    <div class="glass" style="border-radius:24px;padding:28px;max-width:760px;margin:0 auto;">
+      <div style="font-size:.72rem;font-weight:700;color:var(--ink-soft);margin-bottom:18px;letter-spacing:.1em;text-transform:uppercase;">All Growth Curves</div>
+      <svg width="100%" viewBox="0 0 520 220" xmlns="http://www.w3.org/2000/svg" style="max-width:520px;">
+        <g opacity=".3">
+          <line x1="50" y1="10" x2="50" y2="195" stroke="rgba(255,255,255,.3)" stroke-width=".8"/>
+          <line x1="50" y1="195" x2="500" y2="195" stroke="rgba(255,255,255,.3)" stroke-width=".8"/>
+          <line x1="50" y1="150" x2="500" y2="150" stroke="rgba(255,255,255,.15)" stroke-width=".5" stroke-dasharray="4 3"/>
+          <line x1="50" y1="100" x2="500" y2="100" stroke="rgba(255,255,255,.15)" stroke-width=".5" stroke-dasharray="4 3"/>
+          <line x1="50" y1="50"  x2="500" y2="50"  stroke="rgba(255,255,255,.15)" stroke-width=".5" stroke-dasharray="4 3"/>
+          <line x1="180" y1="10" x2="180" y2="195" stroke="rgba(255,255,255,.15)" stroke-width=".5" stroke-dasharray="4 3"/>
+          <line x1="310" y1="10" x2="310" y2="195" stroke="rgba(255,255,255,.15)" stroke-width=".5" stroke-dasharray="4 3"/>
+          <line x1="440" y1="10" x2="440" y2="195" stroke="rgba(255,255,255,.15)" stroke-width=".5" stroke-dasharray="4 3"/>
+        </g>
+        <line x1="50" y1="10" x2="50" y2="200" stroke="rgba(255,255,255,.4)" stroke-width="1.5"/>
+        <line x1="45" y1="195" x2="505" y2="195" stroke="rgba(255,255,255,.4)" stroke-width="1.5"/>
+        <!-- O(1) -->
+        <path d="M50,192 L500,192" fill="none" stroke="#34d399" stroke-width="1.8" stroke-dasharray="800" stroke-dashoffset="800">
+          <animate attributeName="stroke-dashoffset" from="800" to="0" dur="1.5s" begin=".2s" fill="freeze"/>
+        </path>
+        <!-- O(log n) -->
+        <path d="M50,192 Q150,180 250,170 Q350,163 500,158" fill="none" stroke="#2dd4bf" stroke-width="1.8" stroke-dasharray="500" stroke-dashoffset="500">
+          <animate attributeName="stroke-dashoffset" from="500" to="0" dur="1.5s" begin=".4s" fill="freeze"/>
+        </path>
+        <!-- O(√n) -->
+        <path d="M50,192 Q150,175 250,160 Q350,148 500,135" fill="none" stroke="#60a5fa" stroke-width="1.8" stroke-dasharray="500" stroke-dashoffset="500">
+          <animate attributeName="stroke-dashoffset" from="500" to="0" dur="1.5s" begin=".6s" fill="freeze"/>
+        </path>
+        <!-- O(n) -->
+        <path d="M50,192 L500,80" fill="none" stroke="#818cf8" stroke-width="1.8" stroke-dasharray="500" stroke-dashoffset="500">
+          <animate attributeName="stroke-dashoffset" from="500" to="0" dur="1.5s" begin=".8s" fill="freeze"/>
+        </path>
+        <!-- O(n log n) -->
+        <path d="M50,192 Q200,140 350,80 Q420,55 500,30" fill="none" stroke="#c084fc" stroke-width="1.8" stroke-dasharray="600" stroke-dashoffset="600">
+          <animate attributeName="stroke-dashoffset" from="600" to="0" dur="1.5s" begin="1s" fill="freeze"/>
+        </path>
+        <!-- O(n²) -->
+        <path d="M50,192 Q200,170 300,120 Q380,75 500,20" fill="none" stroke="#fb923c" stroke-width="2" stroke-dasharray="600" stroke-dashoffset="600">
+          <animate attributeName="stroke-dashoffset" from="600" to="0" dur="1.5s" begin="1.2s" fill="freeze"/>
+        </path>
+        <!-- O(2ⁿ) -->
+        <path d="M50,192 Q150,190 230,160 Q290,110 340,40" fill="none" stroke="#f87171" stroke-width="2" stroke-dasharray="500" stroke-dashoffset="500">
+          <animate attributeName="stroke-dashoffset" from="500" to="0" dur="1.5s" begin="1.4s" fill="freeze"/>
+        </path>
+        <!-- Labels -->
+        <text x="505" y="196" font-family="Fraunces,serif" font-size="11" fill="rgba(255,255,255,.6)" font-weight="700">n</text>
+        <text x="356" y="192" font-family="DM Mono,monospace" font-size="8" fill="#34d399">O(1)</text>
+        <text x="390" y="155" font-family="DM Mono,monospace" font-size="8" fill="#2dd4bf">log n</text>
+        <text x="420" y="130" font-family="DM Mono,monospace" font-size="8" fill="#60a5fa">√n</text>
+        <text x="440" y="68" font-family="DM Mono,monospace" font-size="8" fill="#818cf8">n</text>
+        <text x="440" y="22" font-family="DM Mono,monospace" font-size="8" fill="#c084fc">n²</text>
+        <text x="342" y="30" font-family="DM Mono,monospace" font-size="8" fill="#f87171">2ⁿ</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ██████████████████████████████████████████ RACE -->
+<section id="race" style="padding:80px 24px;background:var(--bg2);border-top:1px solid var(--border);text-align:center;">
+  <div style="max-width:860px;margin:0 auto;">
+    <span class="sec-label">Section 08</span>
+    <h2 class="font-fraunces" style="font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:900;margin:12px 0 14px;">Growth Race 🏁</h2>
+    <p style="color:var(--ink-mid);max-width:520px;margin:0 auto 36px;line-height:1.8;font-size:.95rem;">Watch complexity classes race as n increases. See how quickly exponential and factorial functions explode compared to efficient algorithms.</p>
+
+    <!-- Race controls -->
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:28px;">
+      <button class="ctrl-btn active" id="race-play-btn" onclick="toggleRace()">▶ Play</button>
+      <button class="ctrl-btn" onclick="resetRace()">⟳ Reset</button>
+      <div style="display:flex;align-items:center;gap:8px;padding:6px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;">
+        <span style="font-size:.7rem;color:var(--ink-soft);">Speed:</span>
+        <input type="range" class="ctrl-slider" min="1" max="5" value="2" id="race-speed" style="width:80px;"/>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;padding:6px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;">
+        <span class="font-mono" style="font-size:.72rem;color:var(--ink-soft);">n =</span>
+        <span class="font-mono" id="race-n-display" style="font-size:.8rem;color:var(--c-bigo);min-width:24px;">1</span>
+      </div>
+    </div>
+
+    <!-- Race bars -->
+    <div class="glass" style="border-radius:24px;padding:28px;max-width:760px;margin:0 auto;">
+      <div id="race-container" style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="race-label" style="color:#34d399;">O(log n)</span>
+          <div class="race-track"><div class="race-fill" id="race-logn" style="background:linear-gradient(90deg,#34d399,rgba(52,211,153,.4));"></div></div>
+          <span class="race-val" id="race-logn-val" style="color:#34d399;">0</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="race-label" style="color:var(--c-bigo);">O(n)</span>
+          <div class="race-track"><div class="race-fill" id="race-n" style="background:linear-gradient(90deg,var(--c-bigo),rgba(96,165,250,.4));"></div></div>
+          <span class="race-val" id="race-n-val" style="color:var(--c-bigo);">0</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="race-label" style="color:var(--c-theta);">O(n log n)</span>
+          <div class="race-track"><div class="race-fill" id="race-nlogn" style="background:linear-gradient(90deg,var(--c-theta),rgba(192,132,252,.4));"></div></div>
+          <span class="race-val" id="race-nlogn-val" style="color:var(--c-theta);">0</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="race-label" style="color:var(--c-lito);">O(n²)</span>
+          <div class="race-track"><div class="race-fill" id="race-n2" style="background:linear-gradient(90deg,var(--c-lito),rgba(251,146,60,.4));"></div></div>
+          <span class="race-val" id="race-n2-val" style="color:var(--c-lito);">0</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="race-label" style="color:#f59e0b;">O(n³)</span>
+          <div class="race-track"><div class="race-fill" id="race-n3" style="background:linear-gradient(90deg,#f59e0b,rgba(245,158,11,.4));"></div></div>
+          <span class="race-val" id="race-n3-val" style="color:#f59e0b;">0</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="race-label" style="color:var(--c-litw);">O(2ⁿ)</span>
+          <div class="race-track"><div class="race-fill" id="race-2n" style="background:linear-gradient(90deg,var(--c-litw),rgba(248,113,113,.4));"></div></div>
+          <span class="race-val" id="race-2n-val" style="color:var(--c-litw);">0</span>
+        </div>
+      </div>
+      <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border);font-size:.72rem;color:var(--ink-pale);text-align:center;">
+        Note: 2ⁿ values are shown on a log scale to prevent overflow. Actual values are astronomical.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ██████████████████████████████████████████ QUIZ -->
+<section id="quiz" style="padding:80px 24px;background:var(--bg);border-top:1px solid var(--border);text-align:center;">
+  <div style="max-width:840px;margin:0 auto;">
+    <span class="sec-label">Section 09</span>
+    <h2 class="font-fraunces" style="font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:900;margin:12px 0 14px;">Test Your Knowledge</h2>
+    <p style="color:var(--ink-mid);max-width:480px;margin:0 auto 36px;line-height:1.8;font-size:.95rem;">5 questions to check your understanding. Select an answer to reveal the explanation.</p>
+
+    <!-- Score tracker -->
+    <div class="glass" style="border-radius:14px;padding:14px 24px;display:inline-flex;align-items:center;gap:16px;margin-bottom:36px;">
+      <div style="font-size:.7rem;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.1em;">Progress</div>
+      <div style="flex:1;width:160px;height:6px;background:var(--surface2);border-radius:99px;overflow:hidden;">
+        <div id="quiz-prog" style="height:100%;background:linear-gradient(90deg,var(--c-bigo),var(--c-theta));border-radius:99px;width:0%;transition:width .5s ease;"></div>
+      </div>
+      <div class="font-mono" id="quiz-score-disp" style="font-size:.8rem;color:var(--c-bigo);">0/5</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:24px;">
+
+      <!-- Q1 -->
+      <div class="glass" style="border-radius:22px;padding:28px;text-align:left;">
+        <div style="font-size:.68rem;font-weight:700;color:var(--c-bigo);text-transform:uppercase;letter-spacing:.12em;margin-bottom:10px;">Question 1</div>
+        <p style="font-weight:700;font-size:.95rem;color:var(--ink);margin-bottom:6px;">Which notation describes an <strong>upper bound</strong> on a function's growth rate?</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:480px;margin:0 auto 18px;">
+          <label><input type="radio" class="quiz-opt" name="q1" onchange="checkQ(1,0,1)"/><div class="quiz-label">A) Big Ω (Omega)</div></label>
+          <label><input type="radio" class="quiz-opt correct" name="q1" onchange="checkQ(1,1,1)"/><div class="quiz-label">B) Big O ✓</div></label>
+          <label><input type="radio" class="quiz-opt" name="q1" onchange="checkQ(1,0,1)"/><div class="quiz-label">C) Big Θ (Theta)</div></label>
+          <label><input type="radio" class="quiz-opt" name="q1" onchange="checkQ(1,0,1)"/><div class="quiz-label">D) Little ω</div></label>
+        </div>
+        <div id="q1-exp" class="glass" style="border-radius:12px;padding:14px 18px;display:none;">
+          <div style="font-size:.76rem;font-weight:700;color:var(--c-bigo);margin-bottom:4px;">💡 Big O is the Upper Bound</div>
+          <div style="font-size:.74rem;color:var(--ink-soft);line-height:1.65;">f ∈ O(g) means f(n) ≤ c·g(n) for all n ≥ n₀. It provides a ceiling — the worst-case guarantee. Big Ω is the lower bound, and Θ requires both simultaneously.</div>
+        </div>
+      </div>
+
+      <!-- Q2 -->
+      <div class="glass" style="border-radius:22px;padding:28px;text-align:left;">
+        <div style="font-size:.68rem;font-weight:700;color:var(--c-theta);text-transform:uppercase;letter-spacing:.12em;margin-bottom:10px;">Question 2</div>
+        <p style="font-weight:700;font-size:.95rem;color:var(--ink);margin-bottom:6px;">If <span class="font-mono" style="color:var(--c-bigo);">f(n) = 5n² + 3n + 7</span>, which is the correct Big O classification?</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:480px;margin:0 auto 18px;">
+          <label><input type="radio" class="quiz-opt" name="q2" onchange="checkQ(2,0,2)"/><div class="quiz-label">A) O(n³)</div></label>
+          <label><input type="radio" class="quiz-opt" name="q2" onchange="checkQ(2,0,2)"/><div class="quiz-label">B) O(5n²)</div></label>
+          <label><input type="radio" class="quiz-opt correct" name="q2" onchange="checkQ(2,1,2)"/><div class="quiz-label">C) O(n²) ✓</div></label>
+          <label><input type="radio" class="quiz-opt" name="q2" onchange="checkQ(2,0,2)"/><div class="quiz-label">D) O(n)</div></label>
+        </div>
+        <div id="q2-exp" class="glass" style="border-radius:12px;padding:14px 18px;display:none;">
+          <div style="font-size:.76rem;font-weight:700;color:var(--c-theta);margin-bottom:4px;">💡 Drop Constants and Lower Terms</div>
+          <div style="font-size:.74rem;color:var(--ink-soft);line-height:1.65;">As n → ∞, only the dominant term matters. 5n² dominates 3n and 7. We drop the constant 5, giving O(n²). Big O notation ignores multiplicative constants.</div>
+        </div>
+      </div>
+
+      <!-- Q3 -->
+      <div class="glass" style="border-radius:22px;padding:28px;text-align:left;">
+        <div style="font-size:.68rem;font-weight:700;color:var(--c-omega);text-transform:uppercase;letter-spacing:.12em;margin-bottom:10px;">Question 3</div>
+        <p style="font-weight:700;font-size:.95rem;color:var(--ink);margin-bottom:6px;">What does <span class="font-mono" style="color:var(--c-omega);">lim(f/g) = 0</span> as n → ∞ indicate?</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:480px;margin:0 auto 18px;">
+          <label><input type="radio" class="quiz-opt" name="q3" onchange="checkQ(3,0,3)"/><div class="quiz-label">A) f ∈ Ω(g)</div></label>
+          <label><input type="radio" class="quiz-opt" name="q3" onchange="checkQ(3,0,3)"/><div class="quiz-label">B) f ∈ Θ(g)</div></label>
+          <label><input type="radio" class="quiz-opt" name="q3" onchange="checkQ(3,0,3)"/><div class="quiz-label">C) f ∈ O(g)</div></label>
+          <label><input type="radio" class="quiz-opt correct" name="q3" onchange="checkQ(3,1,3)"/><div class="quiz-label">D) f ∈ o(g) ✓</div></label>
+        </div>
+        <div id="q3-exp" class="glass" style="border-radius:12px;padding:14px 18px;display:none;">
+          <div style="font-size:.76rem;font-weight:700;color:var(--c-omega);margin-bottom:4px;">💡 Little o means the Ratio Vanishes</div>
+          <div style="font-size:.74rem;color:var(--ink-soft);line-height:1.65;">Little o (strict upper) requires lim f/g = 0. If f/g → 0, f is asymptotically negligible relative to g. Big O only requires lim f/g ≤ L &lt; ∞.</div>
+        </div>
+      </div>
+
+      <!-- Q4 -->
+      <div class="glass" style="border-radius:22px;padding:28px;text-align:left;">
+        <div style="font-size:.68rem;font-weight:700;color:var(--c-lito);text-transform:uppercase;letter-spacing:.12em;margin-bottom:10px;">Question 4</div>
+        <p style="font-weight:700;font-size:.95rem;color:var(--ink);margin-bottom:6px;">Place these in order from slowest to fastest growth:</p>
+        <p class="font-mono" style="font-size:.86rem;color:var(--c-theta);background:rgba(192,132,252,.08);padding:10px 14px;border-radius:10px;margin-bottom:16px;">n³, log n, 2ⁿ, n log n, n!</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:560px;margin:0 auto 18px;">
+          <label><input type="radio" class="quiz-opt correct" name="q4" onchange="checkQ(4,1,4)"/><div class="quiz-label" style="font-size:.78rem;">A) log n &lt; n log n &lt; n³ &lt; 2ⁿ &lt; n! ✓</div></label>
+          <label><input type="radio" class="quiz-opt" name="q4" onchange="checkQ(4,0,4)"/><div class="quiz-label" style="font-size:.78rem;">B) log n &lt; n³ &lt; n log n &lt; 2ⁿ &lt; n!</div></label>
+          <label><input type="radio" class="quiz-opt" name="q4" onchange="checkQ(4,0,4)"/><div class="quiz-label" style="font-size:.78rem;">C) n log n &lt; log n &lt; n³ &lt; n! &lt; 2ⁿ</div></label>
+          <label><input type="radio" class="quiz-opt" name="q4" onchange="checkQ(4,0,4)"/><div class="quiz-label" style="font-size:.78rem;">D) log n &lt; n log n &lt; 2ⁿ &lt; n³ &lt; n!</div></label>
+        </div>
+        <div id="q4-exp" class="glass" style="border-radius:12px;padding:14px 18px;display:none;">
+          <div style="font-size:.76rem;font-weight:700;color:var(--c-lito);margin-bottom:4px;">💡 Canonical Ordering</div>
+          <div style="font-size:.74rem;color:var(--ink-soft);line-height:1.65;">The full ordering is: O(1) &lt; O(log n) &lt; O(√n) &lt; O(n) &lt; O(n log n) &lt; O(n²) &lt; O(n³) &lt; O(2ⁿ) &lt; O(n!). Note n³ grows faster than n log n but slower than 2ⁿ.</div>
+        </div>
+      </div>
+
+      <!-- Q5 -->
+      <div class="glass" style="border-radius:22px;padding:28px;text-align:left;">
+        <div style="font-size:.68rem;font-weight:700;color:var(--c-litw);text-transform:uppercase;letter-spacing:.12em;margin-bottom:10px;">Question 5</div>
+        <p style="font-weight:700;font-size:.95rem;color:var(--ink);margin-bottom:6px;">Is the following TRUE or FALSE? <span class="font-mono" style="color:var(--c-litw);">"If f ∈ O(g), then g ∈ Ω(f)"</span></p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:360px;margin:0 auto 18px;">
+          <label><input type="radio" class="quiz-opt correct" name="q5" onchange="checkQ(5,1,5)"/><div class="quiz-label">TRUE ✓</div></label>
+          <label><input type="radio" class="quiz-opt" name="q5" onchange="checkQ(5,0,5)"/><div class="quiz-label">FALSE</div></label>
+        </div>
+        <div id="q5-exp" class="glass" style="border-radius:12px;padding:14px 18px;display:none;">
+          <div style="font-size:.76rem;font-weight:700;color:var(--c-litw);margin-bottom:4px;">💡 TRUE — O and Ω are Dual Notations</div>
+          <div style="font-size:.74rem;color:var(--ink-soft);line-height:1.65;">If f(n) ≤ c·g(n), then g(n) ≥ (1/c)·f(n). Big O and Ω are mirror images. f ∈ O(g) ⟺ g ∈ Ω(f). This is a fundamental symmetry of asymptotic analysis.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Final score reveal -->
+    <div id="quiz-result" style="display:none;margin-top:32px;">
+      <div class="glass" style="border-radius:24px;padding:32px;max-width:480px;margin:0 auto;text-align:center;">
+        <div style="font-family:'Fraunces',serif;font-size:3.5rem;font-weight:900;animation:score-pop .5s ease-out;" id="quiz-final-score">0/5</div>
+        <div style="font-size:1rem;font-weight:700;color:var(--ink-mid);margin-top:8px;" id="quiz-grade-text">Nice work!</div>
+        <div style="font-size:.8rem;color:var(--ink-soft);margin-top:8px;" id="quiz-grade-sub">Keep learning!</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ██████████████████████████████████████████ CHEAT SHEET -->
+<section style="padding:80px 24px;background:var(--bg2);border-top:1px solid var(--border);text-align:center;">
+  <div style="max-width:860px;margin:0 auto;">
+    <span class="sec-label">Quick Reference</span>
+    <h2 class="font-fraunces" style="font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:900;margin:12px 0 14px;">Notation Cheat Sheet</h2>
+    <p style="color:var(--ink-mid);max-width:440px;margin:0 auto 44px;line-height:1.8;font-size:.95rem;">Everything at a glance. Screenshot this.</p>
+    <div class="glass" style="border-radius:28px;padding:32px;max-width:780px;margin:0 auto;">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;">
+
+        <div style="background:rgba(96,165,250,.06);border:1px solid rgba(96,165,250,.2);border-radius:18px;padding:20px;text-align:left;">
+          <div class="font-fraunces" style="font-size:2rem;font-weight:900;color:var(--c-bigo);margin-bottom:6px;">O(g)</div>
+          <div style="font-weight:700;font-size:.82rem;color:var(--ink);margin-bottom:4px;">Upper Bound</div>
+          <div class="font-mono" style="font-size:.73rem;color:var(--ink-soft);">f(n) ≤ c·g(n)</div>
+          <div class="font-mono" style="font-size:.7rem;color:var(--ink-pale);margin-top:4px;">lim f/g = L &lt; ∞</div>
+          <div style="margin-top:10px;font-size:.7rem;color:var(--c-bigo);background:rgba(96,165,250,.1);padding:4px 10px;border-radius:7px;display:inline-block;">Worst case</div>
+        </div>
+
+        <div style="background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.2);border-radius:18px;padding:20px;text-align:left;">
+          <div class="font-fraunces" style="font-size:2rem;font-weight:900;color:var(--c-omega);margin-bottom:6px;">Ω(g)</div>
+          <div style="font-weight:700;font-size:.82rem;color:var(--ink);margin-bottom:4px;">Lower Bound</div>
+          <div class="font-mono" style="font-size:.73rem;color:var(--ink-soft);">f(n) ≥ c·g(n)</div>
+          <div class="font-mono" style="font-size:.7rem;color:var(--ink-pale);margin-top:4px;">lim f/g = L &gt; 0</div>
+          <div style="margin-top:10px;font-size:.7rem;color:var(--c-omega);background:rgba(52,211,153,.1);padding:4px 10px;border-radius:7px;display:inline-block;">Best case</div>
+        </div>
+
+        <div style="background:rgba(192,132,252,.06);border:1px solid rgba(192,132,252,.2);border-radius:18px;padding:20px;text-align:left;">
+          <div class="font-fraunces" style="font-size:2rem;font-weight:900;color:var(--c-theta);margin-bottom:6px;">Θ(g)</div>
+          <div style="font-weight:700;font-size:.82rem;color:var(--ink);margin-bottom:4px;">Tight Bound</div>
+          <div class="font-mono" style="font-size:.73rem;color:var(--ink-soft);">c₁g ≤ f ≤ c₂g</div>
+          <div class="font-mono" style="font-size:.7rem;color:var(--ink-pale);margin-top:4px;">lim f/g = L (0&lt;L&lt;∞)</div>
+          <div style="margin-top:10px;font-size:.7rem;color:var(--c-theta);background:rgba(192,132,252,.1);padding:4px 10px;border-radius:7px;display:inline-block;">Average case</div>
+        </div>
+
+        <div style="background:rgba(251,146,60,.06);border:1px solid rgba(251,146,60,.2);border-radius:18px;padding:20px;text-align:left;">
+          <div class="font-fraunces" style="font-size:2rem;font-weight:900;color:var(--c-lito);margin-bottom:6px;">o(g)</div>
+          <div style="font-weight:700;font-size:.82rem;color:var(--ink);margin-bottom:4px;">Strict Upper</div>
+          <div class="font-mono" style="font-size:.73rem;color:var(--ink-soft);">f grows slower</div>
+          <div class="font-mono" style="font-size:.7rem;color:var(--ink-pale);margin-top:4px;">lim f/g = 0</div>
+          <div style="margin-top:10px;font-size:.7rem;color:var(--c-lito);background:rgba(251,146,60,.1);padding:4px 10px;border-radius:7px;display:inline-block;">Strictly less</div>
+        </div>
+
+        <div style="background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.2);border-radius:18px;padding:20px;text-align:left;">
+          <div class="font-fraunces" style="font-size:2rem;font-weight:900;color:var(--c-litw);margin-bottom:6px;">ω(g)</div>
+          <div style="font-weight:700;font-size:.82rem;color:var(--ink);margin-bottom:4px;">Strict Lower</div>
+          <div class="font-mono" style="font-size:.73rem;color:var(--ink-soft);">f grows faster</div>
+          <div class="font-mono" style="font-size:.7rem;color:var(--ink-pale);margin-top:4px;">lim f/g = ∞</div>
+          <div style="margin-top:10px;font-size:.7rem;color:var(--c-litw);background:rgba(248,113,113,.1);padding:4px 10px;border-radius:7px;display:inline-block;">Strictly more</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ██████████████████████████████████████████ FOOTER -->
+<footer style="background:linear-gradient(150deg,#060810,#0d1220);padding:52px 24px 36px;text-align:center;border-top:1px solid var(--border);">
+  <div style="max-width:700px;margin:0 auto;">
+    <div style="position:relative;width:72px;height:72px;margin:0 auto 22px;display:flex;align-items:center;justify-content:center;">
+      <div style="position:absolute;width:56px;height:56px;border-radius:50%;border:1.5px solid rgba(96,165,250,.25);animation:spin-slow 5s linear infinite;"></div>
+      <div style="position:absolute;width:70px;height:70px;border-radius:50%;border:1.5px solid rgba(192,132,252,.15);animation:spin-slow 8s linear infinite reverse;"></div>
+      <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#60a5fa,#c084fc);display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;color:white;font-size:.9rem;font-weight:700;box-shadow:0 0 20px rgba(96,165,250,.4);">Θ</div>
+    </div>
+    <h3 style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:var(--ink);margin-bottom:6px;">AsymptoLab v2.0</h3>
+    <p style="font-size:.78rem;color:var(--ink-pale);margin-bottom:24px;">Interactive Asymptotic Notation Platform · Dark Theme · Live Graph Engine</p>
+    <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-bottom:28px;">
+      <a href="#hero"     class="nav-link" style="font-size:.72rem;">Intro</a>
+      <a href="#playground" class="nav-link" style="font-size:.72rem;">Playground</a>
+      <a href="#bigo"     class="nav-link" style="font-size:.72rem;color:var(--c-bigo);">Big O</a>
+      <a href="#omega"    class="nav-link" style="font-size:.72rem;color:var(--c-omega);">Big Ω</a>
+      <a href="#theta"    class="nav-link" style="font-size:.72rem;color:var(--c-theta);">Big Θ</a>
+      <a href="#little"   class="nav-link" style="font-size:.72rem;">o / ω</a>
+      <a href="#compare"  class="nav-link" style="font-size:.72rem;">Compare</a>
+      <a href="#race"     class="nav-link" style="font-size:.72rem;">Race</a>
+      <a href="#quiz"     class="nav-link" style="font-size:.72rem;">Quiz</a>
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:18px;">
+      <p style="font-size:.7rem;color:var(--ink-pale);opacity:.5;">© 2025 AsymptoLab · Asymptotic Notations Visualizer · Educational Platform</p>
+    </div>
+  </div>
+</footer>
+
+<!-- ██████████████████████████████████████████ JAVASCRIPT -->
+<script>
+// ============ PARTICLES ============
+(function(){
+  const p = document.getElementById('particles');
+  if(!p) return;
+  const colors = ['rgba(96,165,250,', 'rgba(192,132,252,', 'rgba(52,211,153,', 'rgba(251,146,60,', 'rgba(248,113,113,'];
+  for(let i=0; i<28; i++){
+    const el = document.createElement('div');
+    const c = colors[Math.floor(Math.random()*colors.length)];
+    const size = 2 + Math.random()*3;
+    el.className = 'particle';
+    el.style.cssText = `
+      width:${size}px;height:${size}px;
+      background:${c}${0.3+Math.random()*0.5});
+      left:${Math.random()*100}%;top:${Math.random()*100}%;
+      --dur:${5+Math.random()*8}s;--delay:${Math.random()*6}s;
+      box-shadow:0 0 ${size*3}px ${c}0.4);
+    `;
+    p.appendChild(el);
+  }
+})();
+
+// ============ MAIN PLAYGROUND GRAPH ============
+const FUNCS = {
+  logn:  { fn: n => Math.log2(n),         color:'#94a3b8', label:'log n'   },
+  sqrtn: { fn: n => Math.sqrt(n),         color:'#34d399', label:'√n'      },
+  n:     { fn: n => n,                    color:'#60a5fa', label:'n'        },
+  nlogn: { fn: n => n*Math.log2(n),       color:'#c084fc', label:'n log n' },
+  n2:    { fn: n => n*n,                  color:'#fb923c', label:'n²'       },
+  '2n':  { fn: n => Math.min(2**n, 1e12), color:'#f87171', label:'2ⁿ'      },
+};
+const fnEnabled = { logn:true, sqrtn:true, n:true, nlogn:true, n2:true, '2n':true };
+let currentNMax = 50;
+
+function toggleFn(key) {
+  fnEnabled[key] = !fnEnabled[key];
+  const btn = document.getElementById('fn-'+key);
+  btn.classList.toggle('on', fnEnabled[key]);
+  updateGraph();
+}
+
+function updateGraph() {
+  const sliderEl = document.getElementById('nmax-slider');
+  const label = document.getElementById('nmax-label');
+  currentNMax = parseInt(sliderEl.value);
+  label.textContent = currentNMax;
+  drawPlayground();
+}
+
+function drawPlayground() {
+  const canvas = document.getElementById('main-graph');
+  if(!canvas) return;
+  const container = document.getElementById('graph-container');
+  canvas.width  = container.offsetWidth || 800;
+  canvas.height = container.offsetHeight || 400;
+  const W = canvas.width, H = canvas.height;
+  const ctx = canvas.getContext('2d');
+  const PAD = { l:52, r:20, t:20, b:40 };
+  const gW = W - PAD.l - PAD.r, gH = H - PAD.t - PAD.b;
+
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = 'rgba(0,0,0,.25)';
+  ctx.beginPath(); ctx.roundRect(0,0,W,H,16); ctx.fill();
+
+  const nmax = currentNMax;
+  let yMax = 0;
+  Object.keys(FUNCS).forEach(k => {
+    if(!fnEnabled[k]) return;
+    for(let n=1; n<=nmax; n+=nmax/100) {
+      const v = FUNCS[k].fn(n);
+      if(v > yMax) yMax = v;
+    }
+  });
+  yMax = Math.max(yMax * 1.1, 1);
+
+  // Grid
+  const gridColor = 'rgba(255,255,255,.06)';
+  ctx.strokeStyle = gridColor; ctx.lineWidth = .8;
+  for(let i=0; i<=5; i++) {
+    const y = PAD.t + gH - i/5*gH;
+    ctx.beginPath(); ctx.moveTo(PAD.l,y); ctx.lineTo(PAD.l+gW,y); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.3)';
+    ctx.font = '10px DM Mono'; ctx.textAlign = 'right';
+    ctx.fillText(Math.round(yMax*i/5).toLocaleString(), PAD.l-6, y+4);
+  }
+  for(let i=0; i<=4; i++) {
+    const x = PAD.l + i/4*gW;
+    ctx.beginPath(); ctx.moveTo(x,PAD.t); ctx.lineTo(x,PAD.t+gH); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.3)';
+    ctx.font = '10px DM Mono'; ctx.textAlign = 'center';
+    ctx.fillText(Math.round(nmax*i/4), x, PAD.t+gH+14);
+  }
+
+  // Axes
+  ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(PAD.l,PAD.t); ctx.lineTo(PAD.l,PAD.t+gH); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(PAD.l,PAD.t+gH); ctx.lineTo(PAD.l+gW,PAD.t+gH); ctx.stroke();
+
+  // Curves with glow
+  Object.keys(FUNCS).forEach(k => {
+    if(!fnEnabled[k]) return;
+    const f = FUNCS[k];
+    ctx.save();
+    ctx.shadowColor = f.color; ctx.shadowBlur = 8;
+    ctx.strokeStyle = f.color; ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    let first = true;
+    for(let n=1; n<=nmax; n+=nmax/200) {
+      const v = FUNCS[k].fn(n);
+      const x = PAD.l + (n/nmax)*gW;
+      const y = PAD.t + gH - Math.min(v/yMax,1)*gH;
+      first ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+      first = false;
+    }
+    ctx.stroke();
+    ctx.restore();
+  });
+
+  // n label
+  ctx.fillStyle = 'rgba(255,255,255,.5)';
+  ctx.font = 'bold 12px Fraunces'; ctx.textAlign = 'left';
+  ctx.fillText('n', PAD.l+gW+4, PAD.t+gH+4);
+}
+
+// Hover tooltip
+let graphData = {};
+function graphHover(e) {
+  const canvas = document.getElementById('main-graph');
+  const rect = canvas.getBoundingClientRect();
+  const tip = document.getElementById('graph-tooltip');
+  const PAD = { l:52, r:20, t:20, b:40 };
+  const gW = canvas.width - PAD.l - PAD.r;
+  const mx = (e.clientX - rect.left) * (canvas.width/rect.width);
+  const n = Math.round(((mx - PAD.l) / gW) * currentNMax);
+  if(n < 1 || n > currentNMax) { graphLeave(); return; }
+  let html = `<span style="color:rgba(255,255,255,.5)">n = ${n}</span><br/>`;
+  Object.keys(FUNCS).forEach(k => {
+    if(!fnEnabled[k]) return;
+    const v = FUNCS[k].fn(n);
+    html += `<span style="color:${FUNCS[k].color}">${FUNCS[k].label}: ${v>=1e6?v.toExponential(1):Math.round(v).toLocaleString()}</span><br/>`;
+  });
+  tip.innerHTML = html;
+  tip.classList.add('visible');
+  tip.style.left = (e.clientX - rect.left + 14) + 'px';
+  tip.style.top  = (e.clientY - rect.top  - 10) + 'px';
+}
+function graphLeave() {
+  document.getElementById('graph-tooltip').classList.remove('visible');
+}
+
+// ============ NOTATION GRAPHS ============
+let bigoState  = { c:2, n0:5 };
+let omegaState = { c:0.8, n0:3 };
+let thetaState = { c1:0.7, c2:2, n0:4 };
+
+function drawNotationGraph(canvasId, type) {
+  const canvas = document.getElementById(canvasId);
+  if(!canvas) return;
+  const W = canvas.width, H = canvas.height;
+  const ctx = canvas.getContext('2d');
+  const PAD = {l:48,r:20,t:20,b:32};
+  const gW = W-PAD.l-PAD.r, gH = H-PAD.t-PAD.b;
+  const nmax = 40;
+
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='rgba(0,0,0,.3)';
+  ctx.beginPath(); ctx.roundRect(0,0,W,H,12); ctx.fill();
+
+  // compute y scale
+  let yMax = 0;
+  for(let n=1; n<=nmax; n++) {
+    const f = n*n + n;
+    let g;
+    if(type==='bigo') g = bigoState.c * n*n;
+    else if(type==='omega') g = omegaState.c * n*n;
+    else g = thetaState.c2 * n*n;
+    yMax = Math.max(yMax, f, g);
+  }
+  yMax *= 1.1;
+
+  const tx = n => PAD.l + (n/nmax)*gW;
+  const ty = v => PAD.t + gH - Math.min(v/yMax,1)*gH;
+
+  // Grid
+  ctx.strokeStyle='rgba(255,255,255,.05)'; ctx.lineWidth=.8;
+  for(let i=1; i<=4; i++){
+    const y = PAD.t + gH - i/4*gH;
+    ctx.beginPath(); ctx.moveTo(PAD.l,y); ctx.lineTo(PAD.l+gW,y); ctx.stroke();
+  }
+
+  // Axes
+  ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=1.2;
+  ctx.beginPath(); ctx.moveTo(PAD.l,PAD.t); ctx.lineTo(PAD.l,PAD.t+gH+2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(PAD.l-2,PAD.t+gH); ctx.lineTo(PAD.l+gW,PAD.t+gH); ctx.stroke();
+
+  function drawCurve(fn, color, dash, glow, lw) {
+    ctx.save();
+    ctx.shadowColor=color; ctx.shadowBlur=glow||0;
+    ctx.strokeStyle=color; ctx.lineWidth=lw||2;
+    if(dash) ctx.setLineDash(dash);
+    ctx.beginPath();
+    let first=true;
+    for(let n=0.5; n<=nmax; n+=0.3){
+      const v=fn(n);
+      const x=tx(n),y=ty(v);
+      first?ctx.moveTo(x,y):ctx.lineTo(x,y);
+      first=false;
+    }
+    ctx.stroke();
+    ctx.restore();
+    ctx.setLineDash([]);
+  }
+
+  function fillRegion(fn1, fn2, color) {
+    ctx.save();
+    ctx.fillStyle=color;
+    ctx.beginPath();
+    for(let n=0.5; n<=nmax; n+=0.5){ const v=fn1(n); n===0.5?ctx.moveTo(tx(n),ty(v)):ctx.lineTo(tx(n),ty(v)); }
+    for(let n=nmax; n>=0.5; n-=0.5){ const v=fn2(n); ctx.lineTo(tx(n),ty(v)); }
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+
+  const f = n => n*n + n;
+
+  if(type==='bigo') {
+    const g = n => bigoState.c * n*n;
+    fillRegion(g, ()=>0, 'rgba(96,165,250,.08)');
+    drawCurve(g, '#60a5fa', [7,4], 6, 2.2);
+    drawCurve(f, '#c084fc', null, 10, 2.6);
+    // n0 marker
+    const n0 = bigoState.n0;
+    ctx.strokeStyle='rgba(251,146,60,.7)'; ctx.lineWidth=1.5; ctx.setLineDash([5,3]);
+    ctx.beginPath(); ctx.moveTo(tx(n0),PAD.t); ctx.lineTo(tx(n0),PAD.t+gH); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='rgba(251,146,60,.9)'; ctx.font='11px DM Mono'; ctx.textAlign='center';
+    ctx.fillText('n₀', tx(n0), PAD.t+gH+20);
+    // labels
+    ctx.fillStyle='#60a5fa'; ctx.font='9px DM Mono'; ctx.textAlign='right';
+    ctx.fillText(`c·g(n)=${bigoState.c}n²`, PAD.l+gW-4, ty(g(nmax-2))+4);
+    ctx.fillStyle='#c084fc';
+    ctx.fillText('f(n)=n²+n', PAD.l+gW-4, ty(f(nmax-2))-6);
+
+  } else if(type==='omega') {
+    const g = n => omegaState.c * n*n;
+    fillRegion(()=>yMax, g, 'rgba(52,211,153,.06)');
+    drawCurve(g, '#34d399', [7,4], 6, 2.2);
+    drawCurve(f, '#c084fc', null, 10, 2.6);
+    const n0 = omegaState.n0;
+    ctx.strokeStyle='rgba(251,146,60,.7)'; ctx.lineWidth=1.5; ctx.setLineDash([5,3]);
+    ctx.beginPath(); ctx.moveTo(tx(n0),PAD.t); ctx.lineTo(tx(n0),PAD.t+gH); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='rgba(251,146,60,.9)'; ctx.font='11px DM Mono'; ctx.textAlign='center';
+    ctx.fillText('n₀', tx(n0), PAD.t+gH+20);
+    ctx.fillStyle='#34d399'; ctx.font='9px DM Mono'; ctx.textAlign='right';
+    ctx.fillText(`c·g(n)=${omegaState.c}n²`, PAD.l+gW-4, ty(g(nmax-2))+4);
+    ctx.fillStyle='#c084fc';
+    ctx.fillText('f(n)=n²+n', PAD.l+gW-4, ty(f(nmax-2))-6);
+
+  } else if(type==='theta') {
+    const g1 = n => thetaState.c1 * n*n;
+    const g2 = n => thetaState.c2 * n*n;
+    fillRegion(g2, g1, 'rgba(192,132,252,.10)');
+    drawCurve(g1, '#34d399', [7,4], 6, 2);
+    drawCurve(g2, '#60a5fa', [7,4], 6, 2);
+    drawCurve(f,  '#c084fc', null,  12, 2.8);
+    const n0 = thetaState.n0;
+    ctx.strokeStyle='rgba(251,146,60,.7)'; ctx.lineWidth=1.5; ctx.setLineDash([5,3]);
+    ctx.beginPath(); ctx.moveTo(tx(n0),PAD.t); ctx.lineTo(tx(n0),PAD.t+gH); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='rgba(251,146,60,.9)'; ctx.font='11px DM Mono'; ctx.textAlign='center';
+    ctx.fillText('n₀', tx(n0), PAD.t+gH+20);
+    ctx.font='9px DM Mono'; ctx.textAlign='right';
+    ctx.fillStyle='#60a5fa'; ctx.fillText(`c₂=${thetaState.c2}`, PAD.l+gW-4, ty(g2(nmax-2))-6);
+    ctx.fillStyle='#c084fc'; ctx.fillText('f(n)', PAD.l+gW-4, ty(f(nmax-2))+12);
+    ctx.fillStyle='#34d399'; ctx.fillText(`c₁=${thetaState.c1}`, PAD.l+gW-4, ty(g1(nmax-2))+4);
+  }
+}
+
+function notationHover(e, type) {
+  const canvasId = type+'-graph';
+  const canvas = document.getElementById(canvasId);
+  const tip = document.getElementById(type+'-tooltip');
+  const rect = canvas.getBoundingClientRect();
+  const PAD = {l:48,r:20,t:20,b:32};
+  const gW = canvas.width - PAD.l - PAD.r;
+  const nmax = 40;
+  const mx = (e.clientX - rect.left) * (canvas.width/rect.width);
+  const n = Math.round(((mx - PAD.l)/gW)*nmax);
+  if(n<1||n>nmax){ notationLeave(type); return; }
+  const f = n*n + n;
+  let html = `<span style="color:rgba(255,255,255,.5)">n = ${n}</span><br/>`;
+  html += `<span style="color:#c084fc">f(n) = ${f.toLocaleString()}</span><br/>`;
+  if(type==='bigo')  html += `<span style="color:#60a5fa">c·g(n) = ${Math.round(bigoState.c*n*n).toLocaleString()}</span>`;
+  if(type==='omega') html += `<span style="color:#34d399">c·g(n) = ${Math.round(omegaState.c*n*n).toLocaleString()}</span>`;
+  if(type==='theta') html += `<span style="color:#34d399">c₁·g = ${Math.round(thetaState.c1*n*n)}</span><br/><span style="color:#60a5fa">c₂·g = ${Math.round(thetaState.c2*n*n)}</span>`;
+  tip.innerHTML = html;
+  tip.classList.add('visible');
+  tip.style.left = (e.clientX - rect.left + 14) + 'px';
+  tip.style.top  = (e.clientY - rect.top  - 10) + 'px';
+}
+function notationLeave(type) {
+  const tip = document.getElementById(type+'-tooltip');
+  if(tip) tip.classList.remove('visible');
+}
+
+function updateBigoC(v)  { bigoState.c=parseFloat(v); document.getElementById('bigo-c-label').textContent=`c=${parseFloat(v).toFixed(1)}`; document.getElementById('bigo-proof').textContent=`f(n) ≤ ${parseFloat(v).toFixed(1)}·n² for all n ≥ ${bigoState.n0}`; drawNotationGraph('bigo-graph','bigo'); }
+function updateBigoN0(v) { bigoState.n0=parseInt(v); document.getElementById('bigo-n0-label').textContent=`n₀=${v}`; document.getElementById('bigo-proof').textContent=`f(n) ≤ ${bigoState.c.toFixed(1)}·n² for all n ≥ ${v}`; drawNotationGraph('bigo-graph','bigo'); }
+function updateOmegaC(v) { omegaState.c=parseFloat(v); document.getElementById('omega-c-label').textContent=`c=${parseFloat(v).toFixed(2)}`; document.getElementById('omega-proof').textContent=`f(n) ≥ ${parseFloat(v).toFixed(2)}·n² for all n ≥ ${omegaState.n0}`; drawNotationGraph('omega-graph','omega'); }
+function updateOmegaN0(v){ omegaState.n0=parseInt(v); document.getElementById('omega-n0-label').textContent=`n₀=${v}`; document.getElementById('omega-proof').textContent=`f(n) ≥ ${omegaState.c.toFixed(2)}·n² for all n ≥ ${v}`; drawNotationGraph('omega-graph','omega'); }
+function updateThetaC1(v){ thetaState.c1=parseFloat(v); document.getElementById('theta-c1-label').textContent=`c₁ = ${parseFloat(v).toFixed(2)}`; document.getElementById('theta-proof').textContent=`${parseFloat(v).toFixed(2)}n² ≤ f(n) ≤ ${thetaState.c2.toFixed(1)}n² for n ≥ ${thetaState.n0}`; drawNotationGraph('theta-graph','theta'); }
+function updateThetaC2(v){ thetaState.c2=parseFloat(v); document.getElementById('theta-c2-label').textContent=`c₂ = ${parseFloat(v).toFixed(1)}`; document.getElementById('theta-proof').textContent=`${thetaState.c1.toFixed(2)}n² ≤ f(n) ≤ ${parseFloat(v).toFixed(1)}n² for n ≥ ${thetaState.n0}`; drawNotationGraph('theta-graph','theta'); }
+function updateThetaN0(v){ thetaState.n0=parseInt(v); document.getElementById('theta-n0-label').textContent=`n₀ = ${v}`; document.getElementById('theta-proof').textContent=`${thetaState.c1.toFixed(2)}n² ≤ f(n) ≤ ${thetaState.c2.toFixed(1)}n² for n ≥ ${v}`; drawNotationGraph('theta-graph','theta'); }
+
+// ============ GROWTH RACE ============
+let raceRunning = false;
+let raceN = 1;
+let raceInterval = null;
+
+function toggleRace() {
+  const btn = document.getElementById('race-play-btn');
+  raceRunning = !raceRunning;
+  if(raceRunning) {
+    btn.textContent = '⏸ Pause'; btn.classList.add('active');
+    runRace();
+  } else {
+    btn.textContent = '▶ Play'; btn.classList.remove('active');
+    if(raceInterval) clearInterval(raceInterval);
+  }
+}
+
+function resetRace() {
+  raceRunning = false; raceN = 1;
+  const btn = document.getElementById('race-play-btn');
+  btn.textContent = '▶ Play'; btn.classList.remove('active');
+  if(raceInterval) clearInterval(raceInterval);
+  updateRaceDisplay();
+}
+
+function runRace() {
+  if(raceInterval) clearInterval(raceInterval);
+  const speed = document.getElementById('race-speed');
+  const delay = 600 / parseInt(speed.value);
+  raceInterval = setInterval(() => {
+    if(raceN >= 25) { clearInterval(raceInterval); raceRunning=false; document.getElementById('race-play-btn').textContent='▶ Play'; document.getElementById('race-play-btn').classList.remove('active'); return; }
+    raceN++;
+    updateRaceDisplay();
+  }, delay);
+}
+
+function updateRaceDisplay() {
+  document.getElementById('race-n-display').textContent = raceN;
+  const n = raceN;
+  const vals = {
+    logn:  Math.log2(n),
+    n:     n,
+    nlogn: n * Math.log2(n),
+    n2:    n*n,
+    n3:    n*n*n,
+    '2n':  Math.min(2**n, 1e15),
+  };
+  // normalize to max
+  const allVals = Object.values(vals);
+  const maxV = Math.max(...allVals);
+  Object.keys(vals).forEach(k => {
+    const pct = Math.min((vals[k] / maxV) * 100, 100);
+    const fill = document.getElementById('race-'+k.replace('/',''));
+    const valEl = document.getElementById('race-'+k.replace('/','') +'-val');
+    if(fill) fill.style.width = pct+'%';
+    if(valEl) {
+      const v = vals[k];
+      valEl.textContent = v >= 1e12 ? v.toExponential(1) : v >= 1e6 ? (v/1e6).toFixed(1)+'M' : Math.round(v).toLocaleString();
+    }
+  });
+}
+
+// ============ QUIZ ============
+let quizScore = 0;
+let quizAnswered = {};
+
+function checkQ(qNum, correct, q) {
+  if(quizAnswered[qNum]) return;
+  quizAnswered[qNum] = true;
+  if(correct) { quizScore++; }
+  const exp = document.getElementById('q'+q+'-exp');
+  if(exp) exp.style.display='block';
+
+  // Update progress
+  const answered = Object.keys(quizAnswered).length;
+  document.getElementById('quiz-score-disp').textContent = `${quizScore}/${answered}`;
+  document.getElementById('quiz-prog').style.width = (answered/5*100)+'%';
+
+  if(answered === 5) {
+    setTimeout(() => {
+      const r = document.getElementById('quiz-result');
+      r.style.display = 'block';
+      const scoreEl = document.getElementById('quiz-final-score');
+      scoreEl.textContent = `${quizScore}/5`;
+      scoreEl.style.color = quizScore>=4 ? '#34d399' : quizScore>=2 ? '#fb923c' : '#f87171';
+      document.getElementById('quiz-grade-text').textContent = quizScore===5 ? '🎉 Perfect Score!' : quizScore>=4 ? '🔥 Excellent!' : quizScore>=3 ? '👍 Good Job!' : '📖 Keep Studying!';
+      document.getElementById('quiz-grade-sub').textContent = quizScore===5 ? 'You\'ve mastered asymptotic notation!' : quizScore>=3 ? 'Review the explanations above to solidify your understanding.' : 'Re-read the sections and try again!';
+    }, 400);
+  }
+}
+
+// ============ INIT ============
+window.addEventListener('load', () => {
+  drawPlayground();
+  drawNotationGraph('bigo-graph','bigo');
+  drawNotationGraph('omega-graph','omega');
+  drawNotationGraph('theta-graph','theta');
+  updateRaceDisplay();
+});
+
+window.addEventListener('resize', () => {
+  drawPlayground();
+  drawNotationGraph('bigo-graph','bigo');
+  drawNotationGraph('omega-graph','omega');
+  drawNotationGraph('theta-graph','theta');
+});
+
+// ============ NAV SCROLL EFFECT ============
+window.addEventListener('scroll', () => {
+  const nav = document.getElementById('top-nav');
+  if(window.scrollY > 60) {
+    nav.style.boxShadow = '0 4px 32px rgba(0,0,0,.5)';
+  } else {
+    nav.style.boxShadow = 'none';
+  }
+});
+</script>
+</body>
+</html>`

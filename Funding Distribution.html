@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Funding Distribution</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root {
+    --bg-1: #faf9ff;
+    --bg-2: #f3f0ff;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --muted-2: #9ca3af;
+    --purple-1: #7c3aed;
+    --purple-2: #a78bfa;
+    --purple-3: #c4b5fd;
+    --glass: rgba(255,255,255,0.72);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(circle at top left, rgba(196,181,253,0.45), transparent 30%),
+      radial-gradient(circle at bottom right, rgba(129,140,248,0.22), transparent 28%),
+      linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 55%, var(--bg-1) 100%);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+  @keyframes shimmer {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  @keyframes bar-grow {
+    from { width: 0%; }
+    to { width: var(--target-width); }
+  }
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(22px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .font-outfit { font-family: 'Outfit', sans-serif; }
+  .section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--purple-1);
+  }
+  .section-label::before {
+    content: '';
+    width: 28px;
+    height: 2px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--purple-1), var(--purple-2));
+  }
+  .glass {
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(196,181,253,0.35);
+    box-shadow: 0 20px 60px rgba(124,58,237,0.10);
+  }
+  .glass-purple {
+    background: rgba(237,233,254,0.72);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(167,139,250,0.35);
+    box-shadow: 0 16px 40px rgba(124,58,237,0.08);
+  }
+  .shimmer-text {
+    background: linear-gradient(90deg, #5b21b6 0%, #7c3aed 28%, #a78bfa 50%, #7c3aed 72%, #5b21b6 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 7s linear infinite;
+  }
+  .progress-track {
+    height: 8px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: #ede9fe;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: inherit;
+    animation: bar-grow 1.3s ease-out both;
+    transform-origin: left;
+  }
+  .tag-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    border: 1px solid rgba(167,139,250,0.25);
+    background: rgba(255,255,255,0.75);
+    color: var(--purple-1);
+  }
+  .stat-card {
+    animation: fade-up 0.8s ease-out both;
+  }
+  .floating-orb {
+    position: absolute;
+    border-radius: 999px;
+    filter: blur(60px);
+    pointer-events: none;
+    animation: float 10s ease-in-out infinite;
+  }
+  .orb-a {
+    width: 260px;
+    height: 260px;
+    left: -60px;
+    top: -80px;
+    background: rgba(196,181,253,0.36);
+  }
+  .orb-b {
+    width: 220px;
+    height: 220px;
+    right: -50px;
+    bottom: 10px;
+    background: rgba(129,140,248,0.22);
+    animation-delay: -3s;
+  }
+  .orb-c {
+    width: 180px;
+    height: 180px;
+    right: 20%;
+    top: 18%;
+    background: rgba(167,139,250,0.18);
+    animation-delay: -6s;
+  }
+  @media (max-width: 768px) {
+    .floating-orb { filter: blur(50px); }
+  }
+</style>
+</head>
+<body>
+  <main class="relative px-4 py-10 md:py-16">
+    <div class="floating-orb orb-a"></div>
+    <div class="floating-orb orb-b"></div>
+    <div class="floating-orb orb-c"></div>
+
+    <section class="relative max-w-6xl mx-auto">
+      <div class="text-center max-w-3xl mx-auto mb-10 md:mb-14">
+        <div class="section-label mb-4 justify-center">Capital Allocation</div>
+        <h1 class="font-outfit text-4xl md:text-6xl font-extrabold tracking-tight leading-tight">
+          <span class="shimmer-text">Funding Distribution</span>
+        </h1>
+        <p class="mt-5 text-sm md:text-base leading-7" style="color:var(--muted);">
+          Where quantum investment capital flows across the technology stack.
+        </p>
+      </div>
+
+      <div class="glass rounded-[2rem] p-6 md:p-10 lg:p-12">
+        <div class="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-10 items-center">
+          <div class="flex justify-center">
+            <svg width="260" height="260" viewBox="0 0 260 260" aria-label="Funding distribution donut chart">
+              <circle cx="130" cy="130" r="86" fill="none" stroke="#ede9fe" stroke-width="38"/>
+              <circle cx="130" cy="130" r="86" fill="none" stroke="#7c3aed" stroke-width="38" stroke-dasharray="373.6 168.4" stroke-dashoffset="135" stroke-linecap="round" transform="rotate(-90 130 130)">
+                <animate attributeName="stroke-dasharray" from="0 542" to="373.6 168.4" dur="1.3s" fill="freeze" begin="0.15s"/>
+              </circle>
+              <circle cx="130" cy="130" r="86" fill="none" stroke="#a78bfa" stroke-width="38" stroke-dasharray="86.7 455.3" stroke-dashoffset="-238" stroke-linecap="round" transform="rotate(-90 130 130)">
+                <animate attributeName="stroke-dasharray" from="0 542" to="86.7 455.3" dur="1.3s" fill="freeze" begin="0.35s"/>
+              </circle>
+              <circle cx="130" cy="130" r="86" fill="none" stroke="#c4b5fd" stroke-width="38" stroke-dasharray="43.4 498.6" stroke-dashoffset="-325" stroke-linecap="round" transform="rotate(-90 130 130)">
+                <animate attributeName="stroke-dasharray" from="0 542" to="43.4 498.6" dur="1.3s" fill="freeze" begin="0.55s"/>
+              </circle>
+              <circle cx="130" cy="130" r="86" fill="none" stroke="#818cf8" stroke-width="38" stroke-dasharray="21.7 520.3" stroke-dashoffset="-368" stroke-linecap="round" transform="rotate(-90 130 130)">
+                <animate attributeName="stroke-dasharray" from="0 542" to="21.7 520.3" dur="1.3s" fill="freeze" begin="0.7s"/>
+              </circle>
+              <circle cx="130" cy="130" r="86" fill="none" stroke="#ddd6fe" stroke-width="38" stroke-dasharray="16.3 525.7" stroke-dashoffset="-390" stroke-linecap="round" transform="rotate(-90 130 130)">
+                <animate attributeName="stroke-dasharray" from="0 542" to="16.3 525.7" dur="1.3s" fill="freeze" begin="0.85s"/>
+              </circle>
+              <circle cx="130" cy="130" r="56" fill="white"/>
+              <text x="130" y="125" text-anchor="middle" fill="#7c3aed" font-size="22" font-weight="800" font-family="Outfit, sans-serif">69%</text>
+              <text x="130" y="145" text-anchor="middle" fill="#9ca3af" font-size="11" font-family="Space Grotesk, sans-serif">Hardware</text>
+            </svg>
+          </div>
+
+          <div class="space-y-5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
+              <div class="glass-purple rounded-2xl p-4">
+                <div class="text-xs uppercase tracking-[0.18em] mb-2" style="color:var(--muted-2);">Largest Share</div>
+                <div class="font-outfit text-3xl font-extrabold" style="color:var(--purple-1);">69%</div>
+                <div class="mt-1 text-sm" style="color:var(--muted);">Hardware investment leads the stack.</div>
+              </div>
+              <div class="glass-purple rounded-2xl p-4">
+                <div class="text-xs uppercase tracking-[0.18em] mb-2" style="color:var(--muted-2);">Stack Mix</div>
+                <div class="flex flex-wrap gap-2">
+                  <span class="tag-pill">Hardware</span>
+                  <span class="tag-pill">Systems</span>
+                  <span class="tag-pill">Equipment</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#7c3aed;"></span><span class="text-sm font-semibold">Hardware</span></div>
+                  <span class="font-outfit font-bold text-sm" style="color:#7c3aed;">69%</span>
+                </div>
+                <div class="progress-track"><div class="bar-fill" style="--target-width:69%;width:69%;background:linear-gradient(90deg,#7c3aed,#a78bfa);"></div></div>
+                <p class="mt-2 text-xs" style="color:var(--muted-2);">Qubit processors, cryogenics, control systems</p>
+              </div>
+
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#a78bfa;"></span><span class="text-sm font-semibold">Systems Software</span></div>
+                  <span class="font-outfit font-bold text-sm" style="color:#a78bfa;">16%</span>
+                </div>
+                <div class="progress-track"><div class="bar-fill" style="--target-width:16%;width:16%;background:linear-gradient(90deg,#a78bfa,#c4b5fd);"></div></div>
+                <p class="mt-2 text-xs" style="color:var(--muted-2);">Compilers, error correction, cloud interfaces</p>
+              </div>
+
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#c4b5fd;"></span><span class="text-sm font-semibold">Equipment</span></div>
+                  <span class="font-outfit font-bold text-sm" style="color:#c4b5fd;">8%</span>
+                </div>
+                <div class="progress-track"><div class="bar-fill" style="--target-width:8%;width:8%;background:linear-gradient(90deg,#c4b5fd,#ede9fe);"></div></div>
+                <p class="mt-2 text-xs" style="color:var(--muted-2);">Dilution refrigerators, lasers, lab instruments</p>
+              </div>
+
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#818cf8;"></span><span class="text-sm font-semibold">Application Software</span></div>
+                  <span class="font-outfit font-bold text-sm" style="color:#818cf8;">4%</span>
+                </div>
+                <div class="progress-track"><div class="bar-fill" style="--target-width:4%;width:4%;background:linear-gradient(90deg,#818cf8,#a5b4fc);"></div></div>
+                <p class="mt-2 text-xs" style="color:var(--muted-2);">Finance, pharma, logistics quantum apps</p>
+              </div>
+
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#ddd6fe;"></span><span class="text-sm font-semibold">Other</span></div>
+                  <span class="font-outfit font-bold text-sm" style="color:#9ca3af;">3%</span>
+                </div>
+                <div class="progress-track"><div class="bar-fill" style="--target-width:3%;width:3%;background:linear-gradient(90deg,#ddd6fe,#f3f0ff);"></div></div>
+                <p class="mt-2 text-xs" style="color:var(--muted-2);">Education, consulting, policy work</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+        <div class="stat-card glass rounded-3xl p-5 text-center" style="animation-delay:0.1s;">
+          <div class="text-xs uppercase tracking-[0.18em] mb-2" style="color:var(--muted-2);">Hardware</div>
+          <div class="font-outfit text-3xl font-extrabold" style="color:var(--purple-1);">69%</div>
+          <div class="mt-2 text-sm" style="color:var(--muted);">Processors and cryogenics dominate spend.</div>
+        </div>
+        <div class="stat-card glass rounded-3xl p-5 text-center" style="animation-delay:0.25s;">
+          <div class="text-xs uppercase tracking-[0.18em] mb-2" style="color:var(--muted-2);">Software</div>
+          <div class="font-outfit text-3xl font-extrabold" style="color:#818cf8;">20%</div>
+          <div class="mt-2 text-sm" style="color:var(--muted);">Systems and application layers combined.</div>
+        </div>
+        <div class="stat-card glass rounded-3xl p-5 text-center" style="animation-delay:0.4s;">
+          <div class="text-xs uppercase tracking-[0.18em] mb-2" style="color:var(--muted-2);">Support</div>
+          <div class="font-outfit text-3xl font-extrabold" style="color:#c4b5fd;">11%</div>
+          <div class="mt-2 text-sm" style="color:var(--muted);">Equipment and other support costs.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Industry Transformation</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root {
+    --bg: #faf9ff;
+    --panel: rgba(255,255,255,0.75);
+    --panel-strong: rgba(237,233,254,0.7);
+    --text: #1f2937;
+    --muted: #6b7280;
+    --muted-2: #9ca3af;
+    --purple: #7c3aed;
+    --purple-2: #a78bfa;
+    --purple-3: #c4b5fd;
+    --green: #22c55e;
+    --blue: #818cf8;
+    --red: #ef4444;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(circle at top left, rgba(196,181,253,0.5), transparent 26%),
+      radial-gradient(circle at bottom right, rgba(129,140,248,0.18), transparent 30%),
+      linear-gradient(180deg, #ffffff 0%, var(--bg) 40%, #f3f0ff 100%);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-14px); }
+  }
+  @keyframes shimmer {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulse-ring {
+    0% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(2.4); opacity: 0; }
+  }
+  @keyframes bar-grow {
+    from { width: 0%; }
+    to { width: var(--target-width); }
+  }
+
+  .font-outfit { font-family: 'Outfit', sans-serif; }
+  .section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--purple);
+  }
+  .section-label::before {
+    content: '';
+    width: 28px;
+    height: 2px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--purple), var(--purple-2));
+  }
+  .shimmer-text {
+    background: linear-gradient(90deg, #5b21b6 0%, #7c3aed 25%, #a78bfa 50%, #7c3aed 75%, #5b21b6 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 7s linear infinite;
+  }
+  .glass {
+    background: var(--panel);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(196,181,253,0.35);
+    box-shadow: 0 18px 50px rgba(124,58,237,0.09);
+  }
+  .glass-purple {
+    background: var(--panel-strong);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(167,139,250,0.35);
+    box-shadow: 0 12px 36px rgba(124,58,237,0.08);
+  }
+  .industry-card {
+    position: relative;
+    z-index: 0;
+    background: rgba(255,255,255,0.85);
+    border: 1px solid rgba(196,181,253,0.35);
+    border-radius: 24px;
+    overflow: visible;
+    animation: fade-up 0.7s ease-out both;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  }
+  .industry-card:hover {
+    z-index: 30;
+    transform: translateY(-6px);
+    box-shadow: 0 18px 50px rgba(124,58,237,0.14);
+    border-color: rgba(167,139,250,0.65);
+  }
+  .detail-body {
+    background: #faf9ff;
+    border: 1px solid rgba(196,181,253,0.3);
+    border-top: none;
+    border-radius: 0 0 14px 14px;
+    padding: 1rem 1rem 1.1rem;
+    font-size: 0.82rem;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+  .reveal-panel {
+    display: block;
+  }
+  .reveal-group {
+    position: relative;
+    width: 100%;
+  }
+  .reveal-trigger {
+    cursor: default;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.85rem 1rem;
+    font-weight: 600;
+    color: var(--text);
+    background: white;
+    border-radius: 14px;
+    border: 1px solid rgba(196,181,253,0.4);
+    transition: all 0.2s ease;
+  }
+  .reveal-group:hover .reveal-trigger {
+    background: var(--purple);
+    color: white;
+    border-color: var(--purple);
+    border-radius: 14px 14px 0 0;
+  }
+  .reveal-trigger::after {
+    content: '+';
+    font-size: 1.2rem;
+    font-weight: 300;
+  }
+  .reveal-group:hover .reveal-trigger::after {
+    content: '−';
+  }
+  .reveal-panel {
+    display: none;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 6px);
+    z-index: 20;
+    box-shadow: 0 14px 30px rgba(124,58,237,0.12);
+  }
+  .reveal-group:hover .reveal-panel {
+    display: block;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: inherit;
+    animation: bar-grow 1.1s ease-out both;
+    transform-origin: left;
+  }
+  .progress-track {
+    height: 8px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: #ede9fe;
+  }
+  .tag-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.85);
+    border: 1px solid rgba(167,139,250,0.25);
+    color: var(--purple);
+    font-size: 0.7rem;
+    font-weight: 700;
+  }
+  .orb {
+    position: absolute;
+    border-radius: 999px;
+    filter: blur(60px);
+    pointer-events: none;
+    animation: float 9s ease-in-out infinite;
+  }
+  .orb-a {
+    width: 280px;
+    height: 280px;
+    left: -80px;
+    top: -90px;
+    background: rgba(196,181,253,0.4);
+  }
+  .orb-b {
+    width: 220px;
+    height: 220px;
+    right: -40px;
+    bottom: 10px;
+    background: rgba(129,140,248,0.2);
+    animation-delay: -3s;
+  }
+  .orb-c {
+    width: 180px;
+    height: 180px;
+    right: 22%;
+    top: 22%;
+    background: rgba(167,139,250,0.18);
+    animation-delay: -6s;
+  }
+</style>
+</head>
+<body>
+  <main class="relative px-4 py-10 md:py-16">
+    <div class="orb orb-a"></div>
+    <div class="orb orb-b"></div>
+    <div class="orb orb-c"></div>
+
+    <section class="relative max-w-6xl mx-auto">
+      <div class="text-center max-w-3xl mx-auto mb-10 md:mb-14">
+          <span class="shimmer-text">Industry Transformation</span>
+        </h1>
+        <p class="mt-5 text-sm md:text-base leading-7" style="color:var(--muted);">
+          Quantum computing is reshaping eight key industries across the global economy.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <article class="industry-card">
+          <div class="p-5 flex flex-col items-center text-center h-full">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-3" style="background:linear-gradient(135deg,#fce7f3,#fbcfe8);"><span style="font-size:1.8rem;">🧬</span></div>
+            <div class="font-outfit font-bold text-base mb-1" style="color:#374151;">Healthcare</div>
+            <p class="text-xs mb-4" style="color:var(--muted);line-height:1.6;">Molecular simulation accelerates drug discovery from decades to months.</p>
+            <div class="w-full space-y-1.5 text-left mt-auto">
+              <div class="reveal-group">
+                <div class="reveal-trigger">Today</div>
+                <div class="detail-body reveal-panel">Quantum simulation of protein folding reduces drug candidate screening from years to weeks. IBM and Pfizer are collaborating on molecular simulations.</div>
+              </div>
+              <div class="reveal-group">
+                <div class="reveal-trigger">Future (2035+)</div>
+                <div class="detail-body reveal-panel">Personalized quantum-designed drugs. Full proteome simulation. Cancer treatment optimization at molecular level.</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="industry-card">
+          <div class="p-5 flex flex-col items-center text-center h-full">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-3" style="background:linear-gradient(135deg,#d1fae5,#a7f3d0);"><span style="font-size:1.8rem;">📈</span></div>
+            <div class="font-outfit font-bold text-base mb-1" style="color:#374151;">Finance</div>
+            <p class="text-xs mb-4" style="color:var(--muted);line-height:1.6;">Portfolio optimization and fraud detection with exponential speedup.</p>
+            <div class="w-full space-y-1.5 text-left mt-auto">
+              <div class="reveal-group">
+                <div class="reveal-trigger">Today</div>
+                <div class="detail-body reveal-panel">JPMorgan and Goldman Sachs are running quantum portfolio optimization pilots. QAOA algorithms for risk analysis show speedups on specific problems.</div>
+              </div>
+              <div class="reveal-group">
+                <div class="reveal-trigger">Future (2035+)</div>
+                <div class="detail-body reveal-panel">Real-time global market simulation. Quantum Monte Carlo for derivatives pricing. Unbreakable transaction security.</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="industry-card">
+          <div class="p-5 flex flex-col items-center text-center h-full">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-3" style="background:linear-gradient(135deg,#fef3c7,#fde68a);"><span style="font-size:1.8rem;">⚡</span></div>
+            <div class="font-outfit font-bold text-base mb-1" style="color:#374151;">Energy</div>
+            <p class="text-xs mb-4" style="color:var(--muted);line-height:1.6;">Quantum simulation unlocks room-temperature superconductors and fusion energy.</p>
+            <div class="w-full space-y-1.5 text-left mt-auto">
+              <div class="reveal-group">
+                <div class="reveal-trigger">Today</div>
+                <div class="detail-body reveal-panel">Quantum simulation of nitrogen fixation could reduce global energy consumption. Energy and quantum chemistry partnerships are growing.</div>
+              </div>
+              <div class="reveal-group">
+                <div class="reveal-trigger">Future (2035+)</div>
+                <div class="detail-body reveal-panel">Quantum-designed catalysts for green hydrogen. Fusion plasma optimization. Grid-scale energy storage material discovery.</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="industry-card">
+          <div class="p-5 flex flex-col items-center text-center h-full">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-3" style="background:linear-gradient(135deg,#ede9fe,#ddd6fe);"><span style="font-size:1.8rem;">📡</span></div>
+            <div class="font-outfit font-bold text-base mb-1" style="color:#374151;">Communications</div>
+            <p class="text-xs mb-4" style="color:var(--muted);line-height:1.6;">Quantum Key Distribution creates theoretically unbreakable encryption channels.</p>
+            <div class="w-full space-y-1.5 text-left mt-auto">
+              <div class="reveal-group">
+                <div class="reveal-trigger">Today</div>
+                <div class="detail-body reveal-panel">China's QKD fiber links and commercial metro networks in Tokyo and London are already operational.</div>
+              </div>
+              <div class="reveal-group">
+                <div class="reveal-trigger">Future (2035+)</div>
+                <div class="detail-body reveal-panel">Global secure communication networks. Satellite-based QKD. Repeater networks enabling worldwide entanglement distribution.</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="industry-card" style="animation-delay:0.5s;">
+          <div class="p-5 flex flex-col items-center text-center h-full">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-3" style="background:linear-gradient(135deg,#fee2e2,#fecaca);"><span style="font-size:1.8rem;">🛡️</span></div>
+            <div class="font-outfit font-bold text-base mb-1" style="color:#374151;">Defense</div>
+            <p class="text-xs mb-4" style="color:var(--muted);line-height:1.6;">Quantum sensing, navigation, and post-quantum cryptography for national security.</p>
+            <div class="w-full space-y-1.5 text-left mt-auto">
+              <div class="reveal-group">
+                <div class="reveal-trigger">Today</div>
+                <div class="detail-body reveal-panel">Quantum sensing programs, NIST post-quantum cryptographic standards, and allied quantum technology sharing are underway.</div>
+              </div>
+              <div class="reveal-group">
+                <div class="reveal-trigger">Future (2035+)</div>
+                <div class="detail-body reveal-panel">Quantum-enhanced radar. GPS-denied navigation via quantum inertial sensors. Fully PQC-protected military communications.</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="industry-card" style="animation-delay:0.6s;">
+          <div class="p-5 flex flex-col items-center text-center h-full">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-3" style="background:linear-gradient(135deg,#d1fae5,#bbf7d0);"><span style="font-size:1.8rem;">🌍</span></div>
+            <div class="font-outfit font-bold text-base mb-1" style="color:#374151;">Climate Science</div>
+            <p class="text-xs mb-4" style="color:var(--muted);line-height:1.6;">Quantum weather modeling and carbon capture simulation at atomic precision.</p>
+            <div class="w-full space-y-1.5 text-left mt-auto">
+              <div class="reveal-group">
+                <div class="reveal-trigger">Today</div>
+                <div class="detail-body reveal-panel">Quantum machine learning is improving climate models and material discovery for carbon capture.</div>
+              </div>
+              <div class="reveal-group">
+                <div class="reveal-trigger">Future (2035+)</div>
+                <div class="detail-body reveal-panel">Full atmosphere simulation at molecular fidelity. Quantum-designed carbon capture materials. Real-time global climate optimization.</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="industry-card" style="animation-delay:0.7s;">
+          <div class="p-5 flex flex-col items-center text-center h-full">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-3" style="background:linear-gradient(135deg,#e0e7ff,#c7d2fe);"><span style="font-size:1.8rem;">🏭</span></div>
+            <div class="font-outfit font-bold text-base mb-1" style="color:#374151;">Manufacturing</div>
+            <p class="text-xs mb-4" style="color:var(--muted);line-height:1.6;">Supply chain optimization and materials discovery at quantum scale.</p>
+            <div class="w-full space-y-1.5 text-left mt-auto">
+              <div class="reveal-group">
+                <div class="reveal-trigger">Today</div>
+                <div class="detail-body reveal-panel">Automotive, logistics, and aerospace teams are using quantum route optimization and material research pilots.</div>
+              </div>
+              <div class="reveal-group">
+                <div class="reveal-trigger">Future (2035+)</div>
+                <div class="detail-body reveal-panel">Quantum-designed alloys and composites. Molecular-level manufacturing simulation. Global supply chain quantum optimization.</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="industry-card" style="animation-delay:0.8s;">
+          <div class="p-5 flex flex-col items-center text-center h-full">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-3" style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);"><span style="font-size:1.8rem;">🚀</span></div>
+            <div class="font-outfit font-bold text-base mb-1" style="color:#374151;">Transportation</div>
+            <p class="text-xs mb-4" style="color:var(--muted);line-height:1.6;">Quantum route optimization solves logistics problems classical computers cannot.</p>
+            <div class="w-full space-y-1.5 text-left mt-auto">
+              <div class="reveal-group">
+                <div class="reveal-trigger">Today</div>
+                <div class="detail-body reveal-panel">Traffic optimization pilots, last-mile delivery routing, and crew scheduling are early wins.</div>
+              </div>
+              <div class="reveal-group">
+                <div class="reveal-trigger">Future (2035+)</div>
+                <div class="detail-body reveal-panel">Global air traffic quantum control. Autonomous vehicle quantum navigation. Hyperloop network quantum scheduling.</div>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+        <div class="glass-purple rounded-2xl p-4 text-left">
+          <div class="font-outfit font-bold mb-2" style="color:var(--purple);">Today</div>
+          <div class="text-sm" style="color:var(--muted);">Mostly pilots, prototypes, and domain-specific wins.</div>
+        </div>
+        <div class="glass-purple rounded-2xl p-4 text-left">
+          <div class="font-outfit font-bold mb-2" style="color:#818cf8;">2035+</div>
+          <div class="text-sm" style="color:var(--muted);">Scaled quantum advantage across multiple sectors.</div>
+        </div>
+        <div class="glass-purple rounded-2xl p-4 text-left">
+          <div class="font-outfit font-bold mb-2" style="color:#22c55e;">Impact</div>
+          <div class="text-sm" style="color:var(--muted);">New products, better models, safer systems, and faster decisions.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
